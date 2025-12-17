@@ -1,0 +1,45 @@
+{
+  "timestamp": "2025-09-24T16:58:53.834Z",
+  "summary": {
+    "passed": 0,
+    "failed": 5,
+    "total": 5
+  },
+  "results": [
+    {
+      "suite": "Revenue Analytics Engine",
+      "status": "fail",
+      "duration": 17277,
+      "error": "Command failed: npx jest src/tests/analytics/revenue-analytics.test.ts --verbose --no-coverage"
+    },
+    {
+      "suite": "Predictive Models",
+      "status": "fail",
+      "duration": 6686,
+      "error": "Command failed: npx jest src/tests/analytics/predictive-models.test.ts --verbose --no-coverage"
+    },
+    {
+      "suite": "Insights Engine",
+      "status": "fail",
+      "duration": 7074,
+      "error": "Command failed: npx jest src/tests/analytics/insights-engine.test.ts --verbose --no-coverage"
+    },
+    {
+      "suite": "Analytics Service",
+      "status": "fail",
+      "duration": 6877,
+      "error": "Command failed: npx jest src/tests/analytics/analytics-service.test.ts --verbose --no-coverage"
+    },
+    {
+      "suite": "Integration Tests",
+      "status": "fail",
+      "duration": 3960,
+      "error": "Command failed: npx jest src/tests/analytics/test-runner.ts --verbose --no-coverage"
+    }
+  ],
+  "environment": {
+    "node": "v22.1.0",
+    "platform": "win32",
+    "arch": "x64"
+  }
+}

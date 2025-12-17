@@ -1,0 +1,1059 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id                         String                    @id @default(cuid())
+  name                       String
+  slug                       String                    @unique
+  email                      String                    @unique
+  passwordHash               String
+  status                     BusinessStatus            @default(TRIAL)
+  phone                      String?
+  website                    String?
+  description                String?
+  logo                       String?
+  timezone                   String                    @default("UTC")
+  currency                   String                    @default("USD")
+  language                   String                    @default("en")
+  createdAt                  DateTime                  @default(now())
+  updatedAt                  DateTime                  @updatedAt
+  deletedAt                  DateTime?
+  apiKeys                    ApiKey[]
+  business_feature_overrides BusinessFeatureOverride[]
+  integrations               BusinessIntegration?
+  businessPolicies           BusinessPolicy?
+  categories                 Category[]
+  embeddings                 Embedding[]
+  emergency_usage_pools      EmergencyUsagePool[]
+  knowledgeBase              KnowledgeBase[]
+  locations                  Location[]
+  menuItems                  MenuItem[]
+  menus                      Menu[]
+  orderTakingAgents          OrderTakingAgent[]
+  orders                     Order[]
+  overage_charges            OverageCharge[]
+  plan_changes               PlanChange[]
+  plan_recommendations       PlanRecommendation[]
+  policies                   Policy[]
+  powerups                   Powerup[]
+  queryLogs                  QueryLog[]
+  subscriptions              Subscription[]
+  usage_alerts               UsageAlert[]
+  usage_events               UsageEvent[]
+  usage_forecasts            UsageForecast[]
+  usageMetrics               UsageMetric[]
+  usage_quotas               UsageQuota[]
+  usage_rollups              UsageRollup[]
+  users                      User[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([email])
+  @@index([deletedAt])
+  @@map("businesses")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  businessId   String
+  email        String
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         UserRole  @default(STAFF)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  business     Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  followupMappings Mapping[] @relation("FollowupMappings")
+  followupRules Rule[] @relation("FollowupRules")
+
+  @@unique([businessId, email])
+  @@index([email])
+  @@index([role])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Location {
+  id             String          @id @default(cuid())
+  businessId     String
+  name           String
+  address        String
+  city           String
+  state          String
+  zipCode        String
+  country        String          @default("US")
+  phone          String?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+  business       Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  operatingHours OperatingHour[]
+
+  @@index([businessId])
+  @@index([deletedAt])
+  @@map("locations")
+}
+
+model OperatingHour {
+  id         String   @id @default(cuid())
+  locationId String
+  dayOfWeek  Int
+  openTime   String
+  closeTime  String
+  isClosed   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([locationId, dayOfWeek])
+  @@index([locationId])
+  @@map("operating_hours")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  businessId  String
+  name        String
+  description String?
+  sortOrder   Int        @default(0)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+  business    Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  menuItems   MenuItem[]
+
+  @@index([businessId])
+  @@index([sortOrder])
+  @@index([deletedAt])
+  @@map("categories")
+}
+
+model MenuItem {
+  id          String    @id @default(cuid())
+  businessId  String
+  categoryId  String?
+  name        String
+  description String?
+  price       Decimal   @db.Decimal(10, 2)
+  image       String?
+  isAvailable Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  allergens   String[]
+  calories    Int?
+  prepTime    Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category    Category? @relation(fields: [categoryId], references: [id])
+
+  @@index([businessId])
+  @@index([categoryId])
+  @@index([isAvailable])
+  @@index([deletedAt])
+  @@map("menu_items")
+}
+
+model Policy {
+  id            String    @id @default(cuid())
+  businessId    String
+  type          String
+  title         String
+  content       String
+  isActive      Boolean   @default(true)
+  effectiveDate DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([type])
+  @@index([deletedAt])
+  @@map("policies")
+}
+
+model KnowledgeBase {
+  id         String    @id @default(cuid())
+  businessId String
+  title      String
+  content    String
+  category   String?
+  tags       String[]
+  isActive   Boolean   @default(true)
+  viewCount  Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([category])
+  @@index([isActive])
+  @@index([deletedAt])
+  @@map("knowledge_base")
+}
+
+model ApiKey {
+  id          String       @id @default(cuid())
+  businessId  String
+  name        String
+  keyHash     String       @unique
+  status      ApiKeyStatus @default(ACTIVE)
+  permissions Json?
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([keyHash])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("api_keys")
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  businessId         String
+  planId             String
+  status             SubscriptionStatus @default(TRIAL)
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean            @default(false)
+  trialStart         DateTime?
+  trialEnd           DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  business           Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([status])
+  @@index([currentPeriodEnd])
+  @@map("subscriptions")
+}
+
+model UsageMetric {
+  id         String    @id @default(cuid())
+  businessId String
+  type       UsageType
+  count      Int       @default(1)
+  metadata   Json?
+  date       DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([type])
+  @@index([date])
+  @@map("usage_metrics")
+}
+
+model Menu {
+  id          String    @id @default(cuid())
+  businessId  String
+  itemName    String
+  description String?
+  price       Decimal   @db.Decimal(10, 2)
+  available   Boolean   @default(true)
+  category    String?
+  aiSuggested Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([available])
+  @@index([deletedAt])
+  @@map("menus")
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  businessId      String
+  customerName    String
+  customerContact String
+  status          OrderStatus @default(PENDING)
+  totalPrice      Decimal     @db.Decimal(10, 2)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deletedAt       DateTime?
+  business        Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  items           OrderItem[]
+
+  @@index([businessId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  name      String
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model Powerup {
+  id          String    @id @default(cuid())
+  businessId  String
+  powerupName String
+  enabled     Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([enabled])
+  @@index([deletedAt])
+  @@map("powerups")
+}
+
+model BusinessPolicy {
+  id            String    @id @default(cuid())
+  businessId    String    @unique
+  deliveryZones Json
+  timings       String?
+  refundPolicy  String?
+  taxRate       Decimal   @default(0) @db.Decimal(5, 2)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([deletedAt])
+  @@map("business_policies")
+}
+
+model BusinessIntegration {
+  id            String    @id @default(cuid())
+  businessId    String    @unique
+  stripeKey     String?
+  twilioSid     String?
+  twilioToken   String?
+  emailProvider String    @default("gmail")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([deletedAt])
+  @@map("business_integrations")
+}
+
+model Embedding {
+  id          String        @id @default(cuid())
+  businessId  String
+  contentType EmbeddingType
+  contentId   String
+  content     String
+  embedding   Float[]
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, contentType, contentId])
+  @@index([businessId])
+  @@index([businessId, contentType])
+  @@index([contentType])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("embeddings")
+}
+
+model QueryLog {
+  id           String         @id @default(cuid())
+  businessId   String
+  query        String
+  response     String?
+  status       QueryLogStatus @default(SUCCESS)
+  responseTime Int?
+  userAgent    String?
+  ipAddress    String?
+  metadata     Json?
+  createdAt    DateTime       @default(now())
+  business     Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("query_logs")
+}
+
+model PlanDefinition {
+  id                String        @id @default(cuid())
+  name              String
+  description       String?
+  price_cents       Int
+  currency          String        @default("usd")
+  billing_interval  String        @default("month")
+  trial_days        Int           @default(0)
+  stripe_price_id   String?
+  is_active         Boolean       @default(true)
+  display_order     Int           @default(0)
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+  feature_flags     FeatureFlag[]
+  plan_changes_from PlanChange[]  @relation("FromPlan")
+  plan_changes_to   PlanChange[]  @relation("ToPlan")
+  plan_features     PlanFeature[]
+
+  @@map("plan_definitions")
+}
+
+model PlanFeature {
+  id            String         @id @default(cuid())
+  plan_id       String
+  feature_key   String
+  feature_type  String
+  limit_value   Int?
+  boolean_value Boolean?
+  enum_value    String?
+  metadata      Json?
+  created_at    DateTime       @default(now())
+  plan          PlanDefinition @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+
+  @@unique([plan_id, feature_key])
+  @@map("plan_features")
+}
+
+model UsageQuota {
+  id                 String    @id @default(cuid())
+  business_id        String
+  plan_id            String
+  quota_type         String
+  quota_limit        Int
+  quota_used         Int       @default(0)
+  quota_overage      Int       @default(0)
+  reset_date         DateTime
+  last_reset_date    DateTime?
+  overage_rate_cents Int       @default(0)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  business           Business  @relation(fields: [business_id], references: [id], onDelete: Cascade)
+
+  @@unique([business_id, quota_type])
+  @@map("usage_quotas")
+}
+
+model UsageEvent {
+  id              String   @id @default(cuid())
+  business_id     String
+  event_type      String
+  quantity        Int      @default(1)
+  tokens_consumed Int?
+  cost_cents      Int?
+  metadata        Json?
+  created_at      DateTime @default(now())
+  business        Business @relation(fields: [business_id], references: [id], onDelete: Cascade)
+
+  @@index([business_id])
+  @@index([event_type])
+  @@index([created_at])
+  @@map("usage_events")
+}
+
+model UsageAlert {
+  id                   String    @id @default(cuid())
+  business_id          String
+  alert_type           String
+  quota_type           String
+  threshold_percentage Int?
+  triggered_at         DateTime  @default(now())
+  acknowledged_at      DateTime?
+  resolved_at          DateTime?
+  notification_sent    Boolean   @default(false)
+  business             Business  @relation(fields: [business_id], references: [id], onDelete: Cascade)
+
+  @@index([business_id])
+  @@index([alert_type])
+  @@index([triggered_at])
+  @@map("usage_alerts")
+}
+
+model PlanChange {
+  id               String          @id @default(cuid())
+  business_id      String
+  from_plan_id     String?
+  to_plan_id       String
+  change_type      String
+  change_timing    String
+  status           String          @default("pending")
+  proration_credit Int             @default(0)
+  proration_charge Int             @default(0)
+  net_charge       Int             @default(0)
+  effective_date   DateTime?
+  reason           String?
+  approved_by      String?
+  created_at       DateTime        @default(now())
+  updated_at       DateTime        @updatedAt
+  business         Business        @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  from_plan        PlanDefinition? @relation("FromPlan", fields: [from_plan_id], references: [id])
+  to_plan          PlanDefinition  @relation("ToPlan", fields: [to_plan_id], references: [id])
+
+  @@index([business_id])
+  @@index([status])
+  @@index([effective_date])
+  @@map("plan_changes")
+}
+
+model EmergencyUsagePool {
+  id              String   @id @default(cuid())
+  business_id     String
+  pool_type       String
+  total_allocated Int
+  used_amount     Int      @default(0)
+  cost_per_unit   Int
+  expires_at      DateTime
+  justification   String?
+  approved_by     String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  business        Business @relation(fields: [business_id], references: [id], onDelete: Cascade)
+
+  @@index([business_id])
+  @@index([expires_at])
+  @@map("emergency_usage_pools")
+}
+
+model FeatureFlag {
+  id               String         @id @default(cuid())
+  plan_id          String
+  feature_key      String
+  feature_category String
+  is_enabled       Boolean        @default(false)
+  access_level     String         @default("restricted")
+  usage_limit      Int?
+  metadata         Json?
+  created_at       DateTime       @default(now())
+  plan             PlanDefinition @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+
+  @@unique([plan_id, feature_key])
+  @@map("feature_flags")
+}
+
+model BusinessFeatureOverride {
+  id          String    @id @default(cuid())
+  business_id String
+  feature_key String
+  is_enabled  Boolean
+  expires_at  DateTime?
+  reason      String?
+  created_by  String?
+  created_at  DateTime  @default(now())
+  business    Business  @relation(fields: [business_id], references: [id], onDelete: Cascade)
+
+  @@index([business_id])
+  @@index([feature_key])
+  @@index([expires_at])
+  @@map("business_feature_overrides")
+}
+
+model UsageRollup {
+  id                String   @id @default(cuid())
+  business_id       String
+  quota_type        String
+  usage_date        DateTime
+  total_usage       Int
+  unique_users      Int      @default(0)
+  peak_hourly_usage Int      @default(0)
+  cost_cents        Int      @default(0)
+  created_at        DateTime @default(now())
+  business          Business @relation(fields: [business_id], references: [id], onDelete: Cascade)
+
+  @@unique([business_id, quota_type, usage_date])
+  @@map("usage_rollups")
+}
+
+model UsageForecast {
+  id               String   @id @default(cuid())
+  business_id      String
+  quota_type       String
+  forecast_date    DateTime
+  predicted_usage  Int
+  confidence_score Float    @default(0.0)
+  model_version    String   @default("v1.0")
+  created_at       DateTime @default(now())
+  business         Business @relation(fields: [business_id], references: [id], onDelete: Cascade)
+
+  @@index([business_id])
+  @@index([forecast_date])
+  @@map("usage_forecasts")
+}
+
+model OverageCharge {
+  id                     String   @id @default(cuid())
+  business_id            String
+  quota_type             String
+  overage_amount         Int
+  rate_per_unit          Int
+  total_charge_cents     Int
+  billing_period_start   DateTime
+  billing_period_end     DateTime
+  stripe_invoice_item_id String?
+  status                 String   @default("pending")
+  created_at             DateTime @default(now())
+  business               Business @relation(fields: [business_id], references: [id], onDelete: Cascade)
+
+  @@index([business_id])
+  @@index([billing_period_start, billing_period_end])
+  @@index([status])
+  @@map("overage_charges")
+}
+
+model PlanRecommendation {
+  id                  String   @id @default(cuid())
+  business_id         String
+  current_plan_id     String
+  recommended_plan_id String
+  confidence_score    Float
+  savings_potential   Int?
+  upgrade_cost        Int?
+  reasoning           Json
+  is_applied          Boolean  @default(false)
+  created_at          DateTime @default(now())
+  business            Business @relation(fields: [business_id], references: [id], onDelete: Cascade)
+
+  @@index([business_id])
+  @@index([current_plan_id])
+  @@index([recommended_plan_id])
+  @@map("plan_recommendations")
+}
+
+model OrderTakingAgent {
+  id             String                     @id @default(cuid())
+  businessId     String
+  name           String
+  description    String
+  isActive       Boolean                    @default(false)
+  launchedAt     DateTime?
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+  business       Business                   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  locations      OrderTakingLocation[]
+  menuItems      OrderTakingMenuItem[]
+  operatingHours OrderTakingOperatingHour[]
+  policies       OrderTakingPolicy[]
+
+  @@index([businessId])
+  @@index([isActive])
+  @@map("order_taking_agents")
+}
+
+model OrderTakingMenuItem {
+  id          String           @id @default(cuid())
+  agentId     String
+  name        String
+  description String?
+  price       Decimal          @db.Decimal(10, 2)
+  isAvailable Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  agent       OrderTakingAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@map("order_taking_menu_items")
+}
+
+model OrderTakingOperatingHour {
+  id        String           @id @default(cuid())
+  agentId   String
+  dayOfWeek Int
+  openTime  String
+  closeTime String
+  isClosed  Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  agent     OrderTakingAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, dayOfWeek])
+  @@index([agentId])
+  @@map("order_taking_operating_hours")
+}
+
+model OrderTakingPolicy {
+  id        String           @id @default(cuid())
+  agentId   String
+  title     String
+  type      String
+  content   String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  agent     OrderTakingAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([type])
+  @@map("order_taking_policies")
+}
+
+model OrderTakingLocation {
+  id        String           @id @default(cuid())
+  agentId   String
+  name      String
+  address   String
+  phone     String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  agent     OrderTakingAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@map("order_taking_locations")
+}
+
+enum BusinessStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  TRIAL
+  CANCELLED
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  STAFF
+  VIEWER
+}
+
+enum UsageType {
+  QUERY
+  ORDER
+  INTEGRATION
+  API_CALL
+  STORAGE
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  INACTIVE
+  REVOKED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIAL
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+}
+
+enum QueryLogStatus {
+  SUCCESS
+  ERROR
+  TIMEOUT
+  RATE_LIMITED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum EmbeddingType {
+  MENU
+  POLICY
+  FAQ
+  BUSINESS
+}
+
+// Followup Agent Models
+model Mapping {
+  id           String              @id @default(cuid())
+  userId       String?             // User who owns this mapping (nullable for existing data migration)
+  connectionId String?             // Link to external connection
+  resource     String              // The DB table/collection name we will query, e.g., "Lead"
+  fields       Json                // Canonical→actual field mapping
+  validatedAt  DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  connection   Connection?          @relation(fields: [connectionId], references: [id])
+  rules        Rule[]
+  validations  MappingValidation[]
+  user         User?               @relation("FollowupMappings", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, connectionId, resource])
+  @@index([userId])
+  @@index([connectionId])
+  @@index([resource])
+  @@map("followup_mappings")
+}
+
+model Rule {
+  id            String    @id @default(cuid())
+  userId        String?   // User who owns this rule (nullable for existing data migration)
+  mappingId     String
+  name          String
+  active        Boolean   @default(true)
+  scheduleCron String?   // Cron expression for scheduling
+  condition     Json      // Rule conditions
+  action        Json      // Rule actions
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  mapping       Mapping   @relation(fields: [mappingId], references: [id], onDelete: Cascade)
+  deliveries    Delivery[]
+  user          User?     @relation("FollowupRules", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([mappingId])
+  @@index([active])
+  @@map("followup_rules")
+}
+
+model Delivery {
+  id              String   @id @default(cuid())
+  ruleId          String
+  entityPk        String   // Primary key of the entity being followed up
+  contact         String   // Contact method (email, phone, etc.)
+  channel         String   // Delivery channel (email, sms, etc.)
+  status          String   @default("pending") // pending, sent, failed, bounced
+  idempotencyKey  String   @unique // Prevent duplicate deliveries
+  dedupeKey       String?  @unique // Sprint 3: Additional idempotency key for (rule, contact, day)
+  sentAt          DateTime?
+  error           String?  // Error message if delivery failed
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  rule            Rule     @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId])
+  @@index([status])
+  @@index([sentAt])
+  @@index([dedupeKey])
+  @@map("followup_deliveries")
+}
+
+model Lead {
+  id            String      @id @default(cuid())
+  name          String
+  email         String
+  replyStatus   ReplyStatus @default(NoReply)
+  lastEmailSent DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([email])
+  @@index([replyStatus])
+  @@index([lastEmailSent])
+  @@map("followup_leads")
+}
+
+enum ReplyStatus {
+  NoReply
+  Replied
+  Bounced
+}
+
+// External Database Connection Models
+model Connection {
+  id                    String            @id @default(cuid())
+  tenantId              String            // Business/tenant identifier
+  type                  DatabaseType
+  name                  String            // User-friendly connection name
+  host                  String
+  port                  Int?
+  database              String
+  username              String
+  password              String            // Encrypted password
+  config                Json?             // Additional config (SSL, etc.)
+  status                ConnectionStatus  @default(ACTIVE)
+  lastTested            DateTime?
+  syncFrequencyMinutes  Int?              @default(60) // Sync frequency in minutes
+  isAutoSyncEnabled     Boolean           @default(true) // Whether auto-sync is enabled
+  lastSyncedAt          DateTime?         // Last successful sync timestamp
+  nextSyncAt            DateTime?         // Next scheduled sync timestamp
+  isSyncing             Boolean           @default(false) // Lock flag to prevent parallel syncs
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  mappings              Mapping[]
+  mappedRecords         MappedRecord[]
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@index([isAutoSyncEnabled])
+  @@index([nextSyncAt])
+  @@map("external_connections")
+}
+
+model MappingValidation {
+  id          String   @id @default(cuid())
+  mappingId   String
+  valid       Boolean
+  details     Json     // Validation results and metrics
+  validatedAt DateTime @default(now())
+  mapping     Mapping  @relation(fields: [mappingId], references: [id], onDelete: Cascade)
+
+  @@index([mappingId])
+  @@index([validatedAt])
+  @@map("mapping_validations")
+}
+
+enum DatabaseType {
+  POSTGRESQL
+  MYSQL
+  SQLITE
+  MONGODB
+  FIREBASE
+}
+
+enum ConnectionStatus {
+  ACTIVE
+  INACTIVE
+  UNREACHABLE
+  ERROR
+}
+
+// Mapped Database Records - stores synced data from external connections
+model MappedRecord {
+  id            String      @id @default(cuid())
+  connectionId  String
+  mappingId     String?     // Optional link to mapping
+  externalId    String      // ID from external database (primary key)
+  data          Json        // All mapped fields and their values
+  isActive      Boolean     @default(true) // Mark inactive if not found in external source
+  syncedAt      DateTime    @default(now()) // Last sync timestamp for this record
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  connection    Connection  @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, externalId])
+  @@index([connectionId])
+  @@index([mappingId])
+  @@index([isActive])
+  @@index([syncedAt])
+  @@map("mapped_records")
+}
+
+// Support Agent (Luna) - Knowledge Base Models
+model KbDocument {
+  id        String   @id @default(cuid())
+  tenantId  String
+  filename  String
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+  chunks    KbChunk[]
+
+  @@index([tenantId])
+  @@index([createdAt])
+  @@map("kb_documents")
+}
+
+model KbChunk {
+  id         String   @id @default(cuid())
+  tenantId   String
+  documentId String
+  content    String
+  embedding  Float[]  // 1536-dimensional embedding (OpenAI text-embedding-3-small)
+  createdAt  DateTime @default(now())
+
+  document KbDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([documentId])
+  @@index([createdAt])
+  @@map("kb_chunks")
+}
+
+// Support Agent (Luna) - Conversation Models
+model Conversation {
+  id        String    @id @default(cuid())
+  tenantId  String
+  createdAt DateTime  @default(now())
+  messages  Message[]
+
+  @@index([tenantId])
+  @@index([createdAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  sender         String   // "user" | "agent"
+  text           String
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+// Phase 2: Tenant Database Configuration Models
+model TenantDatabaseConfig {
+  id        String       @id @default(cuid())
+  tenantId  String       @unique
+  dbType    DatabaseType @default(POSTGRESQL)
+  host      String
+  port      Int
+  username  String
+  password  String       // Encrypted password
+  database  String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([tenantId])
+  @@map("tenant_database_configs")
+}
+
+model TenantTableMapping {
+  id               String   @id @default(cuid())
+  tenantId         String   @unique
+  tableName        String?
+  primaryKeyColumn String?
+  displayFields    Json?    // array of field names to display in results
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("tenant_table_mappings")
+}
+
+// Phase 3: Support Ticket Model
+model SupportTicket {
+  id             String   @id @default(cuid())
+  tenantId       String
+  conversationId String?
+  title          String
+  description    String?
+  status         String   // "open", "in_progress", "resolved"
+  assignedTo     String?  // internal userId
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([conversationId])
+  @@index([status])
+  @@index([assignedTo])
+  @@map("support_tickets")
+}

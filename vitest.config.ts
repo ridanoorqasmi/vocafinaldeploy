@@ -1,0 +1,12 @@
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    setupFiles: ['./tests/setup.ts'],
+    testTimeout: 30000, // 30 seconds for database operations
+    hookTimeout: 30000,
+    teardownTimeout: 30000,
+  },
+});

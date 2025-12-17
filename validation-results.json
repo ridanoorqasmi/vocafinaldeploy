@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-09-24T17:08:32.394Z",
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5
+  },
+  "results": [
+    {
+      "test": "Schema Validation",
+      "status": "pass"
+    },
+    {
+      "test": "Service Files",
+      "status": "pass"
+    },
+    {
+      "test": "API Routes",
+      "status": "pass"
+    },
+    {
+      "test": "Test Files",
+      "status": "pass"
+    },
+    {
+      "test": "TypeScript Compilation",
+      "status": "fail"
+    }
+  ],
+  "environment": {
+    "node": "v22.1.0",
+    "platform": "win32",
+    "arch": "x64"
+  }
+}

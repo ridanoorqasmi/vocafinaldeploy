@@ -1,0 +1,244 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 20, 20, 20;
+  --background-end-rgb: 10, 10, 10;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 20, 20, 20;
+    --background-end-rgb: 10, 10, 10;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #141414;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FF0000;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #E60000;
+}
+
+/* Voice animation */
+.voice-pulse {
+  animation: voicePulse 2s ease-in-out infinite;
+}
+
+@keyframes voicePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Blob animation */
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #FF0000 0%, #E60000 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 0, 0, 0.2);
+}
+
+/* AI Network Background */
+.ai-network-bg {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 0, 0, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 30%, rgba(255, 0, 0, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 40% 70%, rgba(255, 0, 0, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255, 0, 0, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 10% 50%, rgba(255, 0, 0, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 90% 60%, rgba(255, 0, 0, 0.1) 0%, transparent 40%),
+    linear-gradient(135deg, #141414 0%, #1A1A1A 100%);
+  position: relative;
+}
+
+.ai-network-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    linear-gradient(90deg, transparent 98%, rgba(255, 0, 0, 0.15) 100%),
+    linear-gradient(0deg, transparent 98%, rgba(255, 0, 0, 0.15) 100%),
+    linear-gradient(45deg, transparent 98%, rgba(255, 0, 0, 0.1) 100%),
+    linear-gradient(-45deg, transparent 98%, rgba(255, 0, 0, 0.1) 100%);
+  background-size: 60px 60px, 60px 60px, 80px 80px, 80px 80px;
+  animation: networkPulse 6s ease-in-out infinite;
+}
+
+/* Network nodes */
+.network-node {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #FF0000;
+  border-radius: 50%;
+  animation: networkPulse 4s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+}
+
+.network-node:nth-child(1) { top: 15%; left: 15%; animation-delay: 0s; }
+.network-node:nth-child(2) { top: 25%; right: 25%; animation-delay: 1s; }
+.network-node:nth-child(3) { bottom: 25%; left: 35%; animation-delay: 2s; }
+.network-node:nth-child(4) { bottom: 15%; right: 35%; animation-delay: 3s; }
+.network-node:nth-child(5) { top: 45%; left: 10%; animation-delay: 0.5s; }
+.network-node:nth-child(6) { top: 55%; right: 10%; animation-delay: 1.5s; }
+.network-node:nth-child(7) { bottom: 45%; left: 20%; animation-delay: 2.5s; }
+.network-node:nth-child(8) { bottom: 55%; right: 20%; animation-delay: 3.5s; }
+
+/* Network connections */
+.network-connection {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 0, 0, 0.4), transparent);
+  animation: networkPulse 4s ease-in-out infinite;
+  box-shadow: 0 0 4px rgba(255, 0, 0, 0.3);
+}
+
+.network-connection:nth-child(9) {
+  top: 17%; left: 17%; width: 58%; transform: rotate(15deg);
+  animation-delay: 0.5s;
+}
+.network-connection:nth-child(10) {
+  top: 27%; right: 27%; width: 38%; transform: rotate(-45deg);
+  animation-delay: 1.5s;
+}
+.network-connection:nth-child(11) {
+  bottom: 27%; left: 37%; width: 28%; transform: rotate(30deg);
+  animation-delay: 2.5s;
+}
+.network-connection:nth-child(12) {
+  bottom: 17%; right: 37%; width: 48%; transform: rotate(-60deg);
+  animation-delay: 3.5s;
+}
+.network-connection:nth-child(13) {
+  top: 47%; left: 12%; width: 42%; transform: rotate(75deg);
+  animation-delay: 1s;
+}
+.network-connection:nth-child(14) {
+  top: 57%; right: 12%; width: 32%; transform: rotate(-30deg);
+  animation-delay: 2s;
+}
+
+/* Network pulse animation */
+@keyframes networkPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+/* Button hover effects */
+.btn-primary {
+  background: linear-gradient(135deg, #FF0000 0%, #E60000 100%);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #E60000 0%, #CC0000 100%);
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 2px solid #FF0000;
+  color: #FFFFFF;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 0, 0, 0.1);
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s ease;
+  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid rgba(255, 0, 0, 0.1);
+}
+
+.card-hover:hover {
+  background: rgba(20, 20, 20, 0.8);
+  border-color: rgba(255, 0, 0, 0.3);
+  box-shadow: 0 0 30px rgba(255, 0, 0, 0.2);
+  transform: translateY(-5px);
+}
