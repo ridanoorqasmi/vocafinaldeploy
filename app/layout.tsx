@@ -12,13 +12,13 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Voca - AI Voice Assistant Platform',
-  description: 'Transform your business with AI-powered voice assistants. Professional, responsive, and engaging voice AI solutions for every industry.',
-  keywords: 'AI, voice assistant, artificial intelligence, SaaS, business automation',
+  title: 'Voca - AI Bots & Automation Platform',
+  description: 'Transform your business with AI-powered bots and automation. Professional, intelligent, and scalable automation solutions for every industry.',
+  keywords: 'AI bots, automation, artificial intelligence, SaaS, business automation, chat bots, AI assistants',
   authors: [{ name: 'Voca Team' }],
   openGraph: {
-    title: 'Voca - AI Voice Assistant Platform',
-    description: 'Transform your business with AI-powered voice assistants.',
+    title: 'Voca - AI Bots & Automation Platform',
+    description: 'Transform your business with AI-powered bots and automation.',
     type: 'website',
     locale: 'en_US',
   },

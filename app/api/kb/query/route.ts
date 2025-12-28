@@ -1,163 +1,154 @@
 // ===== KB QUERY API =====
+// Phase 4: Production hardening - tenant isolation, rate limiting, caching, logging
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getPrismaClient } from '@/lib/prisma';
 import { generateEmbedding } from '@/lib/services/kb/generateEmbedding';
 import { cosineSimilarity } from '@/lib/openai-client';
+// Phase 4: Import hardening utilities
+import { validateTenantId, sanitizeTenantId } from '@/lib/services/agent/tenantIsolation';
+import { checkAgentRateLimit } from '@/lib/services/agent/rateLimiter';
+import { getCached, setCached } from '@/lib/services/agent/cache';
+import { logKbQuery, logAgentError } from '@/lib/services/agent/logging';
+import { getFallbackResponse } from '@/lib/services/agent/fallback';
 
 const prisma = getPrismaClient();
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  let tenantId: string | null = null;
+
   try {
     const body = await request.json();
-    const { question, tenantId } = body;
+    const { question, tenantId: rawTenantId } = body;
 
-    if (!question || !tenantId) {
+    // Phase 4: Sanitize and validate inputs
+    const sanitizedTenantId = sanitizeTenantId(rawTenantId);
+    if (!sanitizedTenantId) {
       return NextResponse.json(
-        { success: false, error: 'question and tenantId are required' },
+        { success: false, error: 'Invalid tenantId format' },
         { status: 400 }
       );
     }
 
-    // Generate embedding for the question
-    const questionEmbedding = await generateEmbedding(question);
-
-    // Get all chunks for the tenant
-    const chunks = await (prisma as any).kbChunk.findMany({
-      where: { tenantId },
-      select: {
-        id: true,
-        content: true,
-        embedding: true
-      }
-    });
-
-    console.log('Found chunks:', chunks.length);
-    if (chunks.length > 0) {
-      console.log('First chunk sample:', {
-        id: chunks[0].id,
-        contentLength: chunks[0].content?.length || 0,
-        contentPreview: chunks[0].content?.substring(0, 50) || 'EMPTY',
-        hasEmbedding: !!chunks[0].embedding,
-        embeddingType: typeof chunks[0].embedding,
-        isArray: Array.isArray(chunks[0].embedding)
-      });
+    if (!question || typeof question !== 'string' || question.trim().length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'question is required and must be a non-empty string' },
+        { status: 400 }
+      );
     }
 
-    if (chunks.length === 0) {
+    tenantId = sanitizedTenantId;
+    const sanitizedQuestion = question.trim().substring(0, 1000); // Limit question length
+
+    // Phase 4: Validate tenantId exists and is active
+    const tenantValidation = await validateTenantId(tenantId);
+    if (!tenantValidation.valid) {
+      logAgentError(tenantId, undefined, tenantValidation.error || 'Tenant validation failed');
+      return NextResponse.json(
+        { success: false, error: tenantValidation.error || 'Invalid tenant' },
+        { status: 403 }
+      );
+    }
+
+    // Phase 4: Rate limiting (per-tenant)
+    const rateLimitResult = await checkAgentRateLimit(tenantId, 'kb_query');
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: rateLimitResult.error || 'Rate limit exceeded',
+          retryAfter: rateLimitResult.retryAfter
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '20',
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+            'X-RateLimit-Reset': String(rateLimitResult.resetTime),
+            'Retry-After': String(rateLimitResult.retryAfter || 60)
+          }
+        }
+      );
+    }
+
+    // Phase 4: Check cache first
+    const cachedResult = getCached<{ answer: string; score: number }>(tenantId, 'kb_query', sanitizedQuestion);
+    if (cachedResult) {
+      const duration = Date.now() - startTime;
+      logKbQuery(tenantId, undefined, sanitizedQuestion, 1, cachedResult.score, duration);
       return NextResponse.json({
         success: true,
         data: {
-          answer: 'No knowledge base content available.',
-          score: 0
+          answer: cachedResult.answer,
+          score: cachedResult.score,
+          cached: true
         }
       });
     }
 
-    // Calculate similarity scores
-    const similarities = chunks.map((chunk: any) => {
-      // Ensure embedding is an array
-      let embeddingArray: number[];
-      if (Array.isArray(chunk.embedding)) {
-        embeddingArray = chunk.embedding as number[];
-      } else if (typeof chunk.embedding === 'string') {
-        // Handle case where embedding might be stored as JSON string
-        embeddingArray = JSON.parse(chunk.embedding);
-      } else {
-        console.error('Invalid embedding format for chunk:', chunk.id);
-        return null;
-      }
+    // Use Intelligent RAG for ChatGPT-level document reasoning
+    const { generateIntelligentRAGAnswer } = await import('@/lib/services/agent/intelligentRAG');
+    const ragResult = await generateIntelligentRAGAnswer(sanitizedQuestion, tenantId);
 
-      try {
-        const similarity = cosineSimilarity(questionEmbedding, embeddingArray);
-        return {
-          chunk,
-          similarity
-        };
-      } catch (error) {
-        console.error('Error calculating similarity for chunk:', chunk.id, error);
-        return null;
-      }
-    }).filter((item: any): item is { chunk: any; similarity: number } => item !== null);
-
-    if (similarities.length === 0) {
-      return NextResponse.json({
-        success: true,
-        data: {
-          answer: 'No valid chunks found for similarity calculation.',
-          score: 0
-        }
-      });
+    // Build answer with citations
+    let answerText = ragResult.answer;
+    if (ragResult.citations.length > 0 && ragResult.confidence !== 'Low') {
+      const citationText = ragResult.citations
+        .slice(0, 3)
+        .map(c => c.sectionHeading ? `${c.documentName} (${c.sectionHeading})` : c.documentName)
+        .join(', ');
+      answerText += `\n\n*Sources: ${citationText}*`;
     }
 
-    // Sort by similarity (highest first)
-    similarities.sort((a: any, b: any) => b.similarity - a.similarity);
-
-    // Filter out chunks with very small content (likely artifacts from chunking)
-    const validSimilarities = similarities.filter((item: any) => {
-      const content = item.chunk.content?.trim() || '';
-      return content.length >= 50; // Minimum 50 characters for meaningful content
-    });
-
-    if (validSimilarities.length === 0) {
-      return NextResponse.json({
-        success: true,
-        data: {
-          answer: 'No matching content found in knowledge base.',
-          score: 0
-        }
-      });
+    if (ragResult.followUpQuestion) {
+      answerText += `\n\n${ragResult.followUpQuestion}`;
     }
 
-    // Get top 5 results from valid chunks
-    const topResults = validSimilarities.slice(0, 5);
-    const bestMatch = topResults[0];
+    // Convert confidence to score
+    const score = ragResult.confidence === 'High' ? 0.9 : ragResult.confidence === 'Medium' ? 0.7 : 0.5;
 
-    // Ensure we have content
-    if (!bestMatch || !bestMatch.chunk.content || bestMatch.chunk.content.trim().length === 0) {
-      console.error('Best match has no content:', bestMatch);
-      return NextResponse.json({
-        success: true,
-        data: {
-          answer: 'No matching content found in knowledge base.',
-          score: 0
-        }
-      });
-    }
+    // Phase 4: Cache the result
+    setCached(tenantId, 'kb_query', sanitizedQuestion, { answer: answerText, score });
 
-    // Log for debugging
-    const answerContent = bestMatch.chunk.content?.trim() || '';
-    console.log('Query result:', {
-      question,
-      bestMatchContentLength: answerContent.length,
-      bestMatchContentPreview: answerContent.substring(0, 100),
-      similarity: bestMatch.similarity,
-      rawContent: bestMatch.chunk.content,
-      contentType: typeof bestMatch.chunk.content,
-      isNull: bestMatch.chunk.content === null,
-      isUndefined: bestMatch.chunk.content === undefined
-    });
+    const duration = Date.now() - startTime;
+    logKbQuery(tenantId, undefined, sanitizedQuestion, ragResult.relevantChunks, score, duration);
 
-    // Return the best matching chunk
+    // Return the synthesized answer with metadata
     return NextResponse.json({
       success: true,
       data: {
-        answer: answerContent || 'No content available in the matching chunk.',
-        score: bestMatch.similarity,
-        topResults: topResults.map((r: any) => ({
-          content: r.chunk.content || '',
-          score: r.similarity
-        }))
+        answer: answerText,
+        score,
+        confidence: ragResult.confidence,
+        coverage: ragResult.coverage,
+        relevantChunks: ragResult.relevantChunks,
+        citations: ragResult.citations,
+        missingInfo: ragResult.missingInfo
+      }
+    }, {
+      headers: {
+        'X-Response-Time': `${duration}ms`
       }
     });
 
   } catch (error: any) {
-    console.error('KB query error:', error);
+    // Phase 4: Log error and return safe fallback
+    logAgentError(tenantId || 'unknown', undefined, error, {
+      endpoint: '/api/kb/query',
+      question: question?.substring(0, 100)
+    });
+    
+    const fallbackResponse = getFallbackResponse('kb_query', error);
+    
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to query knowledge base',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        data: {
+          answer: fallbackResponse.text,
+          score: 0
+        }
       },
       { status: 500 }
     );

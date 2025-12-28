@@ -2,14 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import KBManagement from '@/components/admin/kb/KBManagement'
-import DBConfig from '@/components/admin/db-config/DBConfig'
-import TableMapping from '@/components/admin/db-mapping/TableMapping'
-import TicketManagement from '@/components/admin/tickets/TicketManagement'
-import { Database, FileText, Ticket } from 'lucide-react'
+import AdminInsights from '@/components/admin/insights/AdminInsights'
+import { FileText, BarChart3 } from 'lucide-react'
 
 export default function LunaAdminPage() {
   const [tenantId, setTenantId] = useState<string>('')
-  const [activeSection, setActiveSection] = useState<'kb' | 'db-config' | 'db-mapping' | 'tickets'>('kb')
+  const [activeSection, setActiveSection] = useState<'kb' | 'insights'>('kb')
 
   useEffect(() => {
     // Get tenantId from localStorage (business data) or use default
@@ -58,37 +56,15 @@ export default function LunaAdminPage() {
             Knowledge Base
           </button>
           <button
-            onClick={() => setActiveSection('db-config')}
+            onClick={() => setActiveSection('insights')}
             className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${
-              activeSection === 'db-config'
+              activeSection === 'insights'
                 ? 'text-orange-500 border-b-2 border-orange-500'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
-            <Database className="w-4 h-4" />
-            Database Config
-          </button>
-          <button
-            onClick={() => setActiveSection('db-mapping')}
-            className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${
-              activeSection === 'db-mapping'
-                ? 'text-orange-500 border-b-2 border-orange-500'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Database className="w-4 h-4" />
-            Table Mapping
-          </button>
-          <button
-            onClick={() => setActiveSection('tickets')}
-            className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${
-              activeSection === 'tickets'
-                ? 'text-orange-500 border-b-2 border-orange-500'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Ticket className="w-4 h-4" />
-            Support Tickets
+            <BarChart3 className="w-4 h-4" />
+            Insights & Analytics
           </button>
         </div>
 
@@ -98,16 +74,8 @@ export default function LunaAdminPage() {
             <KBManagement tenantId={tenantId} />
           )}
 
-          {activeSection === 'db-config' && (
-            <DBConfig tenantId={tenantId} />
-          )}
-
-          {activeSection === 'db-mapping' && (
-            <TableMapping tenantId={tenantId} />
-          )}
-
-          {activeSection === 'tickets' && (
-            <TicketManagement tenantId={tenantId} />
+          {activeSection === 'insights' && (
+            <AdminInsights tenantId={tenantId} />
           )}
         </div>
       </div>

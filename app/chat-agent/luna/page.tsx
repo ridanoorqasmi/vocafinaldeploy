@@ -7,20 +7,26 @@ export default function LunaPage() {
   const [tenantId, setTenantId] = useState<string>('')
 
   useEffect(() => {
-    // Get tenantId from localStorage (business data) or use default
+    // Phase 4: Require chat-specific authentication
     try {
-      const storedBusiness = localStorage.getItem('voca_business')
-      if (storedBusiness) {
-        const businessData = JSON.parse(storedBusiness)
-        setTenantId(businessData.id || 'default')
+      const chatToken = localStorage.getItem('chat_auth_token')
+      const chatBusiness = localStorage.getItem('chat_business')
+      
+      if (chatToken && chatBusiness) {
+        const businessData = JSON.parse(chatBusiness)
+        if (businessData.id) {
+          setTenantId(businessData.id)
+        } else {
+          // No business ID, redirect to chat auth
+          window.location.href = '/chat-auth?redirect=/chat-agent/luna'
+        }
       } else {
-        // For demo purposes, use a default tenantId
-        // In production, this should require authentication
-        setTenantId('default')
+        // No chat auth, redirect to chat auth page
+        window.location.href = '/chat-auth?redirect=/chat-agent/luna'
       }
     } catch (error) {
-      console.error('Error loading business data:', error)
-      setTenantId('default')
+      console.error('Error loading chat auth data:', error)
+      window.location.href = '/chat-auth?redirect=/chat-agent/luna'
     }
   }, [])
 

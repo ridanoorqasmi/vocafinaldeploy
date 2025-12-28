@@ -17,11 +17,11 @@ const CTASection = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Ready to Transform Your Business with <span className="text-red-400">AI Voice</span>?
+              Ready to Transform Your Business with <span className="text-red-400">AI Bots</span>?
             </h2>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-              Join thousands of businesses already using <span className="text-red-400 font-semibold">Voca</span> to enhance customer experience, 
-              streamline operations, and drive growth with AI-powered voice assistants.
+              Join thousands of businesses already using <span className="text-red-400 font-semibold">Voca</span> to automate workflows, 
+              enhance customer support, and drive growth with intelligent AI bots and automation.
             </p>
 
             {/* Benefits */}

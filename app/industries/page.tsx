@@ -124,10 +124,10 @@ export default function IndustriesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              AI Voice Solutions for <span className="text-red-400">Every Industry</span>
+              AI Bots & Automation for <span className="text-red-400">Every Industry</span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
-              Discover how <span className="text-red-400 font-semibold">Voca's</span> AI voice assistants can transform your business operations 
+              Discover how <span className="text-red-400 font-semibold">Voca's</span> AI bots and automation solutions can transform your business operations 
               and enhance customer experiences across all sectors.
             </p>
           </div>
@@ -151,8 +151,8 @@ export default function IndustriesPage() {
               Ready to Transform Your Industry?
             </h2>
             <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Let's discuss how <span className="text-red-400 font-semibold">Voca</span> can help you implement AI voice solutions 
-              tailored to your specific industry needs.
+              Let's discuss how <span className="text-red-400 font-semibold">Voca</span> can help you implement AI bots and automation 
+              solutions tailored to your specific industry needs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a

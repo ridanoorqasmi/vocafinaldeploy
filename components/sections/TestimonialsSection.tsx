@@ -8,7 +8,7 @@ const testimonials = [
     name: 'Sarah Johnson',
     role: 'CTO',
     company: 'TechFlow Solutions',
-    content: 'Voca has revolutionized our customer support. The voice AI handles 80% of our inquiries automatically, reducing response times from hours to seconds.',
+    content: 'Voca has revolutionized our customer support. The AI bots handle 80% of our inquiries automatically, reducing response times from hours to seconds.',
     rating: 5,
     avatar: '/api/placeholder/60/60',
   },
@@ -16,7 +16,7 @@ const testimonials = [
     name: 'Michael Chen',
     role: 'Product Manager',
     company: 'HealthCare Plus',
-    content: 'Implementing Voca in our healthcare platform has improved patient engagement significantly. The voice assistant makes medical information more accessible.',
+    content: 'Implementing Voca in our healthcare platform has improved patient engagement significantly. The AI bots make medical information more accessible and automate scheduling.',
     rating: 5,
     avatar: '/api/placeholder/60/60',
   },
@@ -24,7 +24,7 @@ const testimonials = [
     name: 'Emily Rodriguez',
     role: 'Head of Operations',
     company: 'EduTech Innovations',
-    content: 'Our students love the voice learning assistant. It has made our educational platform more interactive and engaging for all age groups.',
+    content: 'Our students love the AI learning assistant. It has made our educational platform more interactive and engaging for all age groups.',
     rating: 5,
     avatar: '/api/placeholder/60/60',
   },
@@ -32,7 +32,7 @@ const testimonials = [
     name: 'David Thompson',
     role: 'CEO',
     company: 'AutoDrive Systems',
-    content: 'Voca\'s automotive voice solutions have set a new standard for in-car experience. Our customers can\'t imagine driving without it now.',
+    content: 'Voca\'s automation solutions have streamlined our customer service operations. Our support team can now focus on complex issues while bots handle routine inquiries.',
     rating: 5,
     avatar: '/api/placeholder/60/60',
   },
@@ -40,7 +40,7 @@ const testimonials = [
     name: 'Lisa Wang',
     role: 'VP of Customer Experience',
     company: 'RetailMax',
-    content: 'The voice shopping assistant has increased our conversion rates by 35%. Customers find it incredibly intuitive and helpful.',
+    content: 'The AI shopping assistant has increased our conversion rates by 35%. Customers find it incredibly intuitive and helpful for product recommendations.',
     rating: 5,
     avatar: '/api/placeholder/60/60',
   },
@@ -48,7 +48,7 @@ const testimonials = [
     name: 'Robert Kim',
     role: 'Director of Innovation',
     company: 'BankSecure',
-    content: 'Security and convenience - Voca delivers both. Our voice banking features have received excellent feedback from customers.',
+    content: 'Security and convenience - Voca delivers both. Our AI banking bots have received excellent feedback from customers for account inquiries and support.',
     rating: 5,
     avatar: '/api/placeholder/60/60',
   },
@@ -78,7 +78,7 @@ const TestimonialsSection = () => {
             className="text-xl text-gray-300 max-w-3xl mx-auto"
           >
             See what our customers say about how <span className="text-red-400 font-semibold">Voca</span> has transformed their businesses 
-            and enhanced their customer experiences.
+            with AI bots and automation solutions.
           </motion.p>
         </div>
 
@@ -149,7 +149,7 @@ const TestimonialsSection = () => {
           </div>
           <div className="text-center">
             <div className="text-4xl font-bold text-red-400 mb-2">50M+</div>
-            <div className="text-gray-300">Voice Interactions</div>
+            <div className="text-gray-300">Automated Interactions</div>
           </div>
         </motion.div>
       </div>

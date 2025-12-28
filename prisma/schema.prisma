@@ -1057,3 +1057,57 @@ model SupportTicket {
   @@index([assignedTo])
   @@map("support_tickets")
 }
+
+// Chat Support Agent (Luna) - Business Chat Configuration & Session Models
+// Phase 4: Business-level chat isolation and authentication
+model BusinessChatConfig {
+  id         String   @id @default(cuid())
+  tenantId   String   @unique
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([isActive])
+  @@map("business_chat_configs")
+}
+
+model ChatSession {
+  id             String   @id @default(cuid())
+  tenantId       String
+  conversationId String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime?
+
+  @@index([tenantId])
+  @@index([conversationId])
+  @@index([isActive])
+  @@index([expiresAt])
+  @@map("chat_sessions")
+}
+
+// Chat Support Agent (Luna) - Analytics Models
+// Admin Insights: Question analytics for knowledge gap detection
+model QuestionAnalytics {
+  id                String   @id @default(cuid())
+  conversationId    String
+  tenantId          String
+  questionText      String   // Original question text
+  normalizedQuestion String  // Normalized for grouping
+  detectedIntent    String?  // Intent from intent classifier
+  confidenceLevel   String   // "High" | "Medium" | "Low"
+  coverageStatus    String   // "covered" | "partially_covered" | "not_covered"
+  supportIntent     String?  // Support-specific intent (faq, complaint, etc.)
+  sentiment         String?  // "positive" | "neutral" | "negative" | "frustrated" | "urgent"
+  createdAt         DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([conversationId])
+  @@index([normalizedQuestion])
+  @@index([confidenceLevel])
+  @@index([coverageStatus])
+  @@index([supportIntent])
+  @@index([createdAt])
+  @@map("question_analytics")
+}

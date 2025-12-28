@@ -12,6 +12,7 @@ export interface FormattedResponse {
 
 /**
  * Format KB query result into user-friendly text
+ * Phase 4: Enhanced with better handling of no-results and low-confidence answers
  */
 export function formatKbResponse(
   answer: string | null | undefined,
@@ -19,7 +20,7 @@ export function formatKbResponse(
 ): FormattedResponse {
   if (!answer || answer.trim().length === 0) {
     return {
-      text: "I couldn't find relevant information in the knowledge base. Would you like to rephrase your question, or would you prefer to speak with a human agent?",
+      text: "I don't have specific information about that in my knowledge base. Could you please rephrase your question or provide more details? If you need assistance with something specific, I can help connect you with our support team.",
       metadata: {
         source: 'kb',
         score: score || 0,
@@ -30,10 +31,29 @@ export function formatKbResponse(
 
   // Clean up the answer
   let formattedText = answer.trim();
+  
+  // Remove any remaining form-like patterns
+  formattedText = formattedText
+    .replace(/^[a-z]+:\s*_+\s*$/gmi, '') // Remove "name: ____" lines
+    .replace(/^[a-z]+\s*:\s*$/gmi, '') // Remove "name:" lines
+    .replace(/\n{3,}/g, '\n\n') // Normalize multiple newlines
+    .trim();
 
-  // If score is very low, add a disclaimer
-  if (score !== undefined && score < 0.5) {
-    formattedText = `${formattedText}\n\n*Note: This answer may not be fully relevant to your question. Please let me know if you need more specific information.`;
+  // If we filtered out everything, return not found message
+  if (formattedText.length < 30) {
+    return {
+      text: "I don't have specific information about that in my knowledge base. Could you please rephrase your question or provide more details?",
+      metadata: {
+        source: 'kb',
+        score: score || 0,
+        hasData: false
+      }
+    };
+  }
+
+  // If score is low, add a disclaimer
+  if (score !== undefined && score < 0.7) {
+    formattedText = `${formattedText}\n\n*Note: This information may not be fully relevant to your question. Please let me know if you need more specific details.`;
   }
 
   return {
@@ -121,13 +141,14 @@ export function formatEscalationResponse(
 
 /**
  * Format greeting response
+ * Phase 4: Enhanced with more natural, modern responses
  */
 export function formatGreetingResponse(): FormattedResponse {
   const greetings = [
-    "Hello! I'm here to help you. How can I assist you today?",
-    "Hi there! I'm your support assistant. What can I help you with?",
-    "Hello! I'm ready to help. What would you like to know?",
-    "Hi! I'm here to answer your questions. How can I assist you?"
+    "Hello! I'm Luna, your AI support assistant. I'm here to help answer your questions using our knowledge base. How can I assist you today?",
+    "Hi there! I'm Luna, and I'm here to help. I can answer questions about our services, products, and policies. What would you like to know?",
+    "Hey! I'm Luna, your support assistant. Feel free to ask me anything, and I'll do my best to help using the information I have. What can I help you with?",
+    "Hi! I'm Luna. I'm here to assist you with any questions you might have. What would you like to know?"
   ];
   
   const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
@@ -142,10 +163,19 @@ export function formatGreetingResponse(): FormattedResponse {
 
 /**
  * Format fallback response
+ * Phase 4: Enhanced with more helpful, modern responses
  */
 export function formatFallbackResponse(): FormattedResponse {
+  const fallbacks = [
+    "I'm not sure I understand that. Could you please rephrase your question or provide more details? I'm here to help answer questions using our knowledge base.",
+    "I didn't quite catch that. Could you try asking your question in a different way? I can help with information from our knowledge base, or connect you with our support team if needed.",
+    "I'm having trouble understanding. Could you provide more context or rephrase your question? I'm here to help!"
+  ];
+  
+  const randomFallback = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+  
   return {
-    text: "I'm not sure I understand. Could you please rephrase your question? If you need help with a specific task, I can connect you with our support team.",
+    text: randomFallback,
     metadata: {
       source: 'fallback'
     }

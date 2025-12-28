@@ -84,6 +84,14 @@ export async function POST(request: NextRequest) {
         }
       });
 
+      // Phase 4: Create business chat config (enabled by default)
+      await tx.businessChatConfig.create({
+        data: {
+          tenantId: business.id,
+          isActive: true
+        }
+      });
+
       return { business, user };
     });
 

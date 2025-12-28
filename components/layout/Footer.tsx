@@ -50,8 +50,8 @@ const Footer = () => {
               <span className="text-xl font-bold">Voca</span>
             </div>
             <p className="text-gray-400 mb-6 max-w-md">
-              Transform your business with AI-powered voice assistants. Professional, 
-              responsive, and engaging voice AI solutions for every industry.
+              Transform your business with AI-powered bots and automation. Professional, 
+              intelligent, and scalable automation solutions for every industry.
             </p>
             <div className="flex space-x-4">
               {socialLinks.map((social) => (

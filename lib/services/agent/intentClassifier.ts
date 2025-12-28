@@ -21,13 +21,13 @@ export interface IntentClassificationResult {
  */
 export function classifyIntent(message: string): IntentClassificationResult {
   const normalizedMessage = message.toLowerCase().trim();
-
-  // Greeting patterns
-  if (isGreeting(normalizedMessage)) {
-    return { intent: 'greeting', confidence: 0.9 };
+  
+  // Skip empty messages
+  if (normalizedMessage.length === 0) {
+    return { intent: 'fallback', confidence: 0.0 };
   }
 
-  // Complaint patterns
+  // Complaint patterns (check before other patterns)
   if (isComplaint(normalizedMessage)) {
     return { intent: 'complaint', confidence: 0.85 };
   }
@@ -43,22 +43,46 @@ export function classifyIntent(message: string): IntentClassificationResult {
     return dbLookupResult;
   }
 
-  // Knowledge base question (default for informational queries)
-  if (isKbQuestion(normalizedMessage)) {
-    return { intent: 'kb_question', confidence: 0.7 };
+  // Greeting patterns (check after DB lookup to avoid false positives)
+  if (isGreeting(normalizedMessage)) {
+    return { intent: 'greeting', confidence: 0.9 };
   }
 
-  // Fallback
-  return { intent: 'fallback', confidence: 0.5 };
+  // Knowledge base question (default for informational queries)
+  // This should catch most questions and informational requests
+  if (isKbQuestion(normalizedMessage)) {
+    return { intent: 'kb_question', confidence: 0.8 };
+  }
+
+  // Fallback - but still try KB first
+  return { intent: 'kb_question', confidence: 0.6 };
 }
 
 function isGreeting(message: string): boolean {
-  const greetingPatterns = [
-    /^(hi|hello|hey|greetings|good morning|good afternoon|good evening)/,
-    /^(hi there|hello there|hey there)/,
-    /^(what's up|whats up|sup)/
+  // Only treat as pure greeting if it's very short and just a greeting
+  // Longer messages with greetings should be treated as questions
+  const pureGreetingPatterns = [
+    /^(hi|hello|hey|greetings|good morning|good afternoon|good evening)$/,
+    /^(hi there|hello there|hey there)$/,
+    /^(what's up|whats up|sup)$/
   ];
-  return greetingPatterns.some(pattern => pattern.test(message));
+  
+  // If it's just a greeting word/phrase, it's a greeting
+  if (pureGreetingPatterns.some(pattern => pattern.test(message))) {
+    return true;
+  }
+  
+  // If message is very short (1-2 words) and starts with greeting, treat as greeting
+  const words = message.split(/\s+/).filter(w => w.length > 0);
+  if (words.length <= 2) {
+    const greetingStartPatterns = [
+      /^(hi|hello|hey|greetings|good morning|good afternoon|good evening)/,
+    ];
+    return greetingStartPatterns.some(pattern => pattern.test(message));
+  }
+  
+  // Otherwise, treat greeting + question as a question
+  return false;
 }
 
 function isComplaint(message: string): boolean {
@@ -134,6 +158,11 @@ function detectDbLookup(message: string): IntentClassificationResult | null {
 }
 
 function isKbQuestion(message: string): boolean {
+  // If it's a pure greeting (very short), don't treat as KB question
+  if (isGreeting(message) && message.split(/\s+/).length <= 2) {
+    return false;
+  }
+  
   // Question patterns
   const questionPatterns = [
     /^(what|when|where|who|why|how|which|can|could|should|would|is|are|do|does|did|will|has|have)/,
@@ -141,7 +170,14 @@ function isKbQuestion(message: string): boolean {
     /^(tell me|explain|describe|show me|help me|i need help|i want to know|i'm looking for)/
   ];
   
-  return questionPatterns.some(pattern => pattern.test(message));
+  // If it matches question patterns, it's a KB question
+  if (questionPatterns.some(pattern => pattern.test(message))) {
+    return true;
+  }
+  
+  // Default: treat most messages as potential KB questions (except pure greetings, complaints, actions, DB lookups)
+  // This makes the agent more helpful and tries to answer from KB first
+  return true;
 }
 
 

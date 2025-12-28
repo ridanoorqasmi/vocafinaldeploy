@@ -9,8 +9,8 @@ const HeroSection = () => {
   const [currentFeature, setCurrentFeature] = useState(0)
   
   const features = [
-    { icon: Sparkles, text: 'AI-Powered Voice Recognition' },
-    { icon: Zap, text: 'Real-time Natural Language Processing' },
+    { icon: Sparkles, text: 'Intelligent AI Bots' },
+    { icon: Zap, text: 'Automated Business Processes' },
     { icon: Shield, text: 'Enterprise-Grade Security' },
   ]
 
@@ -72,13 +72,13 @@ const HeroSection = () => {
           {/* Main Heading */}
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
             Transform Your Business with
-            <span className="block gradient-text">AI Voice Solutions</span>
+            <span className="block gradient-text">AI Bots & Automation</span>
           </h1>
 
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed">
-            Experience the future of AI communication with <span className="text-red-400 font-semibold">Voca</span>. Professional, responsive, 
-            and engaging voice AI solutions that understand, respond, and adapt to your needs.
+            Experience the power of intelligent automation with <span className="text-red-400 font-semibold">Voca</span>. Build AI-powered bots 
+            that automate workflows, enhance customer support, and streamline your business operations.
           </p>
 
           {/* CTA Buttons */}
@@ -88,7 +88,7 @@ const HeroSection = () => {
               className="group btn-primary text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-2"
             >
               <Mic className="w-5 h-5" />
-              <span>Try Voice Demo</span>
+              <span>Try AI Bots</span>
               <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
             </Link>
             
@@ -102,16 +102,16 @@ const HeroSection = () => {
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-red-400 mb-2">99.9%</div>
-              <div className="text-gray-300">Accuracy Rate</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-red-400 mb-2">50+</div>
-              <div className="text-gray-300">Languages Supported</div>
-            </div>
-            <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-red-400 mb-2">24/7</div>
               <div className="text-gray-300">Always Available</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-red-400 mb-2">100%</div>
+              <div className="text-gray-300">Automated</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-red-400 mb-2">Fast</div>
+              <div className="text-gray-300">Response Time</div>
             </div>
           </div>
         </div>

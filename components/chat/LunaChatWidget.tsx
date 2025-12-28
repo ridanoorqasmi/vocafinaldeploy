@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Send, Bot, User, X, Minimize2 } from 'lucide-react'
+import MarkdownRenderer from './MarkdownRenderer'
 
 interface Message {
   id: string
@@ -207,9 +208,10 @@ export default function LunaChatWidget({ tenantId }: LunaChatWidgetProps) {
                           Luna
                         </div>
                       )}
-                      <p className="text-sm whitespace-pre-wrap break-words">
-                        {message.text}
-                      </p>
+                      <MarkdownRenderer 
+                        content={message.text}
+                        className="light-theme"
+                      />
                       {message.ticketId && (
                         <div className="mt-2 text-xs text-blue-600 font-medium">
                           📋 Ticket #{message.ticketId.substring(0, 8)} created

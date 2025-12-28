@@ -5,21 +5,21 @@ import { Brain, Globe, Shield, Zap, Users, Clock, BarChart3, Mic } from 'lucide-
 
 const features = [
   {
-    icon: Mic,
-    title: 'Advanced Voice Recognition',
-    description: 'State-of-the-art speech recognition with 99.9% accuracy across multiple languages and accents.',
-    color: 'from-red-500 to-red-600',
-  },
-  {
     icon: Brain,
-    title: 'AI-Powered Intelligence',
-    description: 'Natural language processing that understands context, intent, and provides intelligent responses.',
+    title: 'Intelligent AI Bots',
+    description: 'Build smart AI bots that understand context, learn from interactions, and provide intelligent responses to your customers.',
     color: 'from-red-500 to-red-600',
   },
   {
-    icon: Globe,
-    title: 'Multi-Language Support',
-    description: 'Support for 50+ languages with real-time translation and localization capabilities.',
+    icon: Zap,
+    title: 'Business Automation',
+    description: 'Automate repetitive tasks, workflows, and business processes to save time and increase efficiency.',
+    color: 'from-red-500 to-red-600',
+  },
+  {
+    icon: Users,
+    title: 'Customer Support Automation',
+    description: 'Deploy AI-powered chat support bots that handle customer inquiries 24/7 with instant, accurate responses.',
     color: 'from-red-500 to-red-600',
   },
   {
@@ -29,27 +29,27 @@ const features = [
     color: 'from-red-500 to-red-600',
   },
   {
-    icon: Zap,
-    title: 'Real-time Processing',
-    description: 'Lightning-fast response times with real-time voice processing and instant feedback.',
-    color: 'from-red-500 to-red-600',
-  },
-  {
-    icon: Users,
-    title: 'Scalable Solutions',
-    description: 'From startups to Fortune 500 companies, our solutions scale with your business needs.',
-    color: 'from-red-500 to-red-600',
-  },
-  {
     icon: Clock,
     title: '24/7 Availability',
-    description: 'Always-on voice assistants that never sleep, providing round-the-clock support.',
+    description: 'Always-on AI bots that never sleep, providing round-the-clock support and automation.',
+    color: 'from-red-500 to-red-600',
+  },
+  {
+    icon: Globe,
+    title: 'Easy Integration',
+    description: 'Seamlessly integrate AI bots into your existing systems, websites, and workflows.',
     color: 'from-red-500 to-red-600',
   },
   {
     icon: BarChart3,
     title: 'Analytics & Insights',
-    description: 'Comprehensive analytics and insights to optimize your voice AI performance.',
+    description: 'Comprehensive analytics and insights to track bot performance and optimize automation workflows.',
+    color: 'from-red-500 to-red-600',
+  },
+  {
+    icon: Mic,
+    title: 'Customizable Solutions',
+    description: 'Tailor AI bots to your specific business needs with custom workflows and intelligent automation rules.',
     color: 'from-red-500 to-red-600',
   },
 ]
@@ -62,11 +62,11 @@ const FeaturesSection = () => {
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Powerful Features for
-            <span className="block gradient-text">Enhanced Communication</span>
+            <span className="block gradient-text">Business Automation</span>
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             Discover the comprehensive suite of features that make <span className="text-red-400 font-semibold">Voca</span> the leading 
-            choice for AI voice assistant solutions.
+            choice for AI bots and business automation solutions.
           </p>
         </div>
 
@@ -102,8 +102,8 @@ const FeaturesSection = () => {
               Ready to Experience the Future?
             </h3>
             <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-              Join thousands of businesses already using <span className="text-red-400 font-semibold">Voca</span> to transform their 
-              customer experience and streamline operations.
+              Join thousands of businesses already using <span className="text-red-400 font-semibold">Voca</span> to automate their 
+              workflows, enhance customer support, and streamline business operations.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a

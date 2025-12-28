@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Building2 } from 'lucide-react'
 import Link from 'next/link'
 
-export default function LoginPage() {
+function LoginPageContent() {
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -37,8 +39,9 @@ export default function LoginPage() {
         // Store user data (no JWT token in simple version)
         localStorage.setItem('voca_user', JSON.stringify(data.data.user))
         localStorage.setItem('voca_business', JSON.stringify(data.data.business))
-        // Redirect to dashboard
-        window.location.href = '/dashboard'
+        // Redirect to specified page or dashboard
+        const redirect = searchParams.get('redirect') || '/dashboard'
+        window.location.href = redirect
       } else {
         setError(data.error?.message || 'Login failed')
       }
@@ -162,7 +165,10 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <p className="text-gray-400">
               Don't have an account?{' '}
-              <Link href="/auth/signup" className="text-red-400 hover:text-red-300 transition-colors font-medium">
+              <Link 
+                href={`/auth/signup${searchParams.get('redirect') ? `?redirect=${encodeURIComponent(searchParams.get('redirect')!)}` : ''}`} 
+                className="text-red-400 hover:text-red-300 transition-colors font-medium"
+              >
                 Create one
               </Link>
             </p>
@@ -170,6 +176,18 @@ export default function LoginPage() {
         </motion.div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    }>
+      <LoginPageContent />
+    </Suspense>
   )
 }
 

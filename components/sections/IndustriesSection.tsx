@@ -8,44 +8,44 @@ const industries = [
   {
     icon: ShoppingCart,
     title: 'E-commerce',
-    description: 'Enhance customer experience with AI-powered voice shopping assistants.',
+    description: 'Automate customer support and order management with AI-powered chat bots.',
     color: 'from-red-500 to-red-600',
-    features: ['Voice product search', 'Order tracking', 'Customer support'],
+    features: ['Automated order tracking', 'Customer support bots', 'Product recommendations'],
   },
   {
     icon: Heart,
     title: 'Healthcare',
-    description: 'Improve patient care with intelligent voice assistants for medical professionals.',
+    description: 'Streamline patient services with intelligent automation bots for scheduling and support.',
     color: 'from-red-500 to-red-600',
-    features: ['Patient scheduling', 'Medical transcription', 'Health monitoring'],
+    features: ['Appointment scheduling', 'Patient inquiries', 'Health information bots'],
   },
   {
     icon: GraduationCap,
     title: 'Education',
-    description: 'Transform learning with AI voice assistants that adapt to student needs.',
+    description: 'Enhance learning experiences with AI bots that provide instant support and information.',
     color: 'from-red-500 to-red-600',
-    features: ['Language learning', 'Study assistance', 'Accessibility tools'],
+    features: ['Student support bots', 'Course information', 'Automated assistance'],
   },
   {
     icon: Building2,
     title: 'Finance',
-    description: 'Secure and efficient financial services with voice-enabled banking tools.',
+    description: 'Automate customer service and account management with secure AI bots.',
     color: 'from-red-500 to-red-600',
-    features: ['Account management', 'Voice payments', 'Investment advice'],
+    features: ['Account inquiries', 'Transaction support', 'Financial information bots'],
   },
   {
     icon: Car,
     title: 'Automotive',
-    description: 'Next-generation in-car experience with intelligent voice control.',
+    description: 'Enhance customer experience with AI bots for sales and service inquiries.',
     color: 'from-red-500 to-red-600',
-    features: ['Voice navigation', 'Climate control', 'Safety alerts'],
+    features: ['Sales inquiries', 'Service scheduling', 'Customer support'],
   },
   {
     icon: Plane,
     title: 'Travel & Hospitality',
-    description: 'Enhance guest experience with AI voice assistants for hotels.',
+    description: 'Automate booking and guest services with intelligent AI bots.',
     color: 'from-red-500 to-red-600',
-    features: ['Booking assistance', 'Concierge services', 'Local recommendations'],
+    features: ['Booking assistance', 'Guest support', 'Information automation'],
   },
 ]
 
@@ -62,7 +62,7 @@ const IndustriesSection = () => {
             viewport={{ once: true }}
             className="text-4xl md:text-5xl font-bold text-white mb-6"
           >
-            AI Voice Solutions for
+            AI Bots & Automation for
             <span className="block gradient-text">Every Industry</span>
           </motion.h2>
           <motion.p
@@ -72,7 +72,7 @@ const IndustriesSection = () => {
             viewport={{ once: true }}
             className="text-xl text-gray-300 max-w-3xl mx-auto"
           >
-            Discover how <span className="text-red-400 font-semibold">Voca's</span> AI voice assistants can transform your business operations 
+            Discover how <span className="text-red-400 font-semibold">Voca's</span> AI bots and automation solutions can transform your business operations 
             and enhance customer experiences across all sectors.
           </motion.p>
         </div>
@@ -138,8 +138,8 @@ const IndustriesSection = () => {
               Ready to Transform Your Industry?
             </h3>
             <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Let's discuss how <span className="text-red-400 font-semibold">Voca</span> can help you implement AI voice solutions 
-              tailored to your specific industry needs.
+              Let's discuss how <span className="text-red-400 font-semibold">Voca</span> can help you implement AI bots and automation 
+              solutions tailored to your specific industry needs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
