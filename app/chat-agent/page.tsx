@@ -46,6 +46,22 @@ export default function AIAgentsPage() {
                 Launch Bob
               </button>
             </div>
+
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-8 hover:bg-blue-500/20 transition-colors w-full sm:w-[400px]">
+              <h3 className="text-2xl font-bold text-white mb-4">Data Analyst Agent</h3>
+              <p className="text-gray-300 mb-6">Intelligent data analysis and insights</p>
+              <button 
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  // Phase 6: Redirect to auth page
+                  router.push('/poppy-auth?redirect=/chat-agent/poppy')
+                }}
+                className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors cursor-pointer"
+              >
+                Launch Poppy
+              </button>
+            </div>
           </div>
         </div>
       </div>

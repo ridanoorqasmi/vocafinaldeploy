@@ -308,3 +308,12 @@ export default function AdminInsights({ tenantId }: AdminInsightsProps) {
 
 
 
+
+
+
+
+
+
+
+
+

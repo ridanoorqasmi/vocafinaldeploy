@@ -27,6 +27,7 @@
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "duckdb": "^1.4.3",
     "firebase-admin": "^13.5.0",
     "formidable": "^3.5.4",
     "framer-motion": "^12.23.22",
@@ -40,6 +41,7 @@
     "next": "^14.0.0",
     "nodemailer": "^7.0.6",
     "openai": "^5.23.2",
+    "papaparse": "^5.4.1",
     "pdf-parse": "^1.1.4",
     "pg": "^8.16.3",
     "react": "^18.2.0",
@@ -49,6 +51,8 @@
     "stripe": "^18.5.0",
     "tailwind-merge": "^3.3.1",
     "typescript": "^5.0.0",
+    "uuid": "^9.0.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -56,14 +60,16 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.0.0",
     "@types/nodemailer": "^7.0.1",
+    "@types/papaparse": "^5.3.14",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@types/uuid": "^9.0.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^8.0.0",
     "eslint-config-next": "14.0.0",
     "postcss": "^8.5.6",
-    "prisma": "^6.16.2",
+    "prisma": "^6.19.1",
     "tailwindcss": "^3.4.13"
   }
 }
