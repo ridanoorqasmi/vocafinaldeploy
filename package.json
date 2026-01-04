@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -p $PORT -H 0.0.0.0",
+    "start": "node 1server.js",
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
