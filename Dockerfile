@@ -2,17 +2,14 @@ FROM node:18
 
 WORKDIR /app
 
-# Install deps first (fast + stable)
 COPY package.json package-lock.json ./
-RUN npm ci
 
-# Copy everything
+# Railway-safe npm install
+RUN npm ci --no-audit --no-fund --loglevel=error
+
 COPY . .
 
-# Generate Prisma client (safe in dev)
 RUN npx prisma generate
 
 EXPOSE 3000
-
-# Dev server (acceptable for dev deploy)
 CMD ["npm", "run", "dev"]
