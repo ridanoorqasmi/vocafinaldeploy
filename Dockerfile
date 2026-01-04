@@ -2,19 +2,17 @@ FROM node:18
 
 WORKDIR /app
 
-# Install dependencies
-COPY package*.json ./
-RUN npm install
+# Install deps first (fast + stable)
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Copy Prisma schema before running generate
-COPY prisma ./prisma
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Copy the rest of the app
+# Copy everything
 COPY . .
+
+# Generate Prisma client (safe in dev)
+RUN npx prisma generate
 
 EXPOSE 3000
 
+# Dev server (acceptable for dev deploy)
 CMD ["npm", "run", "dev"]
