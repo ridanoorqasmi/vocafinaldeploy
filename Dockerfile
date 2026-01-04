@@ -2,14 +2,10 @@ FROM node:18
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-
-# Railway-safe npm install
-RUN npm ci --no-audit --no-fund --loglevel=error
-
+# Copy everything
 COPY . .
 
-RUN npx prisma generate
-
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+
+# Install deps + generate prisma at runtime, not build time
+CMD sh -c "npm install && npx prisma generate && npm run dev"
