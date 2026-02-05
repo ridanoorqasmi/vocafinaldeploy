@@ -1,32 +1,40 @@
-# Script to safely regenerate Prisma client
-# This script handles the Windows file locking issue
+# Fix Prisma Generate Error on Windows
+# This script stops processes that might be locking the Prisma DLL file
 
-Write-Host "🔧 Fixing Prisma Client Generation..." -ForegroundColor Cyan
+Write-Host "🔧 Fixing Prisma Generate Error..." -ForegroundColor Cyan
+Write-Host ""
 
-# Check if dev server might be running
-Write-Host "`n⚠️  Please stop your Next.js dev server (if running) before continuing..." -ForegroundColor Yellow
-Write-Host "   Press Ctrl+C in the terminal where 'npm run dev' is running`n" -ForegroundColor Yellow
+# Check if Node processes are running
+$nodeProcesses = Get-Process -Name "node" -ErrorAction SilentlyContinue
 
-# Wait a moment
-Start-Sleep -Seconds 2
-
-# Try to remove the locked file
-$prismaPath = "node_modules\.prisma"
-if (Test-Path $prismaPath) {
-    Write-Host "🗑️  Removing existing .prisma folder..." -ForegroundColor Yellow
-    Remove-Item $prismaPath -Recurse -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Seconds 1
+if ($nodeProcesses) {
+    Write-Host "⚠️  Found Node.js processes running. These may be locking the Prisma DLL." -ForegroundColor Yellow
+    Write-Host "Please stop your dev server (Ctrl+C in the terminal where it's running)" -ForegroundColor Yellow
+    Write-Host ""
+    $continue = Read-Host "Have you stopped the dev server? (y/N)"
+    
+    if ($continue -ne "y" -and $continue -ne "Y") {
+        Write-Host "Please stop the dev server first, then run this script again." -ForegroundColor Red
+        exit 1
+    }
 }
 
-# Generate Prisma client
-Write-Host "`n🔨 Generating Prisma client..." -ForegroundColor Cyan
+# Try to kill any remaining Node processes (optional, be careful)
+Write-Host ""
+Write-Host "Attempting to generate Prisma client..." -ForegroundColor Cyan
+Write-Host ""
+
 try {
     npx prisma generate
-    Write-Host "`n✅ Prisma client generated successfully!" -ForegroundColor Green
-    Write-Host "`nYou can now restart your dev server with: npm run dev" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "✅ Prisma client generated successfully!" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "You can now restart your dev server with: npm run dev" -ForegroundColor Cyan
 } catch {
-    Write-Host "`n❌ Error generating Prisma client:" -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor Red
-    Write-Host "`n💡 Solution: Make sure your dev server is stopped, then try again." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "❌ Still having issues? Try:" -ForegroundColor Red
+    Write-Host "1. Close all terminals and VS Code" -ForegroundColor White
+    Write-Host "2. Open a fresh terminal" -ForegroundColor White
+    Write-Host "3. Run: npx prisma generate" -ForegroundColor White
+    Write-Host "4. If that fails, restart your computer" -ForegroundColor White
 }
-

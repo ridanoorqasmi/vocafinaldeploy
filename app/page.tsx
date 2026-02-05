@@ -1,17 +1,15 @@
 import HeroSection from '@/components/sections/HeroSection'
-import FeaturesSection from '@/components/sections/FeaturesSection'
-import IndustriesSection from '@/components/sections/IndustriesSection'
-import CTASection from '@/components/sections/CTASection'
-import TestimonialsSection from '@/components/sections/TestimonialsSection'
+import WhatVocaDoesSection from '@/components/sections/WhatVocaDoesSection'
+import IndustriesSectionMinimal from '@/components/sections/IndustriesSectionMinimal'
+import EarlyAccessFormSection from '@/components/sections/EarlyAccessFormSection'
 
 export default function Home() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <HeroSection />
-      <FeaturesSection />
-      <IndustriesSection />
-      <TestimonialsSection />
-      <CTASection />
+      <WhatVocaDoesSection />
+      <IndustriesSectionMinimal />
+      <EarlyAccessFormSection />
     </div>
   )
 }

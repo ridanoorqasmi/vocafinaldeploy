@@ -62,6 +62,22 @@ export default function AIAgentsPage() {
                 Launch Poppy
               </button>
             </div>
+
+            <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-8 hover:bg-purple-500/20 transition-colors w-full sm:w-[400px]">
+              <h3 className="text-2xl font-bold text-white mb-4">Sales Manager Agent</h3>
+              <p className="text-gray-300 mb-6">AI-powered sales content generation</p>
+              <button 
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  // Redirect to Sally auth page
+                  router.push('/sally-auth?redirect=/chat-agent/sally')
+                }}
+                className="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors cursor-pointer"
+              >
+                Launch Sally
+              </button>
+            </div>
           </div>
         </div>
       </div>

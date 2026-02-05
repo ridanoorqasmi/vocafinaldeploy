@@ -27,9 +27,11 @@ export async function authenticateToken(request: NextRequest): Promise<{
   try {
     // Extract token from Authorization header
     const authHeader = request.headers.get('authorization');
+    console.log('[authenticateToken] Auth header present:', !!authHeader);
     const token = extractTokenFromHeader(authHeader || undefined);
 
     if (!token) {
+      console.error('[authenticateToken] No token extracted from header');
       return {
         success: false,
         error: {
@@ -38,10 +40,12 @@ export async function authenticateToken(request: NextRequest): Promise<{
         }
       };
     }
+    console.log('[authenticateToken] Token extracted, length:', token.length);
 
     // Verify token and get user session
     const session = await validateUserSession(token);
     if (!session) {
+      console.error('[authenticateToken] Session validation failed');
       return {
         success: false,
         error: {
@@ -50,6 +54,7 @@ export async function authenticateToken(request: NextRequest): Promise<{
         }
       };
     }
+    console.log('[authenticateToken] Session validated successfully for user:', session.user.email);
 
     // Set business context for RLS
     await setBusinessContext(session.user.businessId);

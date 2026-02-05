@@ -147,7 +147,7 @@ export const AUTH_ERROR_MESSAGES = {
 export const JWT_CONFIG = {
   accessToken: {
     secret: process.env.JWT_SECRET!,
-    expiresIn: '15m'
+    expiresIn: '7d' // Increased from 15m to 7d for better UX
   },
   refreshToken: {
     secret: process.env.JWT_REFRESH_SECRET!,

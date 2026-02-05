@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { v4 as uuidv4 } from 'uuid'
 import { generateAccessToken } from '@/lib/token-service'
 
 const prisma = new PrismaClient()
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await prisma.users.findFirst({
       where: {
         email: email.toLowerCase(),
         deletedAt: null
@@ -64,89 +65,121 @@ export async function POST(request: NextRequest) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 12)
 
-    // Create a default business for chat support agent users
-    let business = await prisma.business.findFirst({
-      where: {
-        slug: 'chat-support-default'
-      }
-    })
+    // Create unique business for each user (better isolation)
+    // Use transaction to ensure atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // Generate unique slug based on email
+      const emailSlug = email.toLowerCase().split('@')[0].replace(/[^a-z0-9]/g, '-')
+      const uniqueSlug = `chat-support-${emailSlug}-${Date.now()}`
 
-    if (!business) {
-      business = await prisma.business.create({
+      // Create business
+      const business = await tx.businesses.create({
         data: {
-          name: 'Chat Support Agent',
-          slug: 'chat-support-default',
+          id: uuidv4(),
+          name: `${firstName}'s Chat Support`,
+          slug: uniqueSlug,
           email: email.toLowerCase(),
-          passwordHash: passwordHash, // This won't be used but required by schema
-          status: 'TRIAL'
+          passwordHash: passwordHash,
+          status: 'TRIAL',
+          timezone: 'UTC',
+          currency: 'USD',
+          language: 'en',
+          updatedAt: new Date()
         }
       })
-    }
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        businessId: business.id,
-        email: email.toLowerCase(),
-        passwordHash,
-        firstName,
-        lastName,
-        role: 'ADMIN', // Chat support agent users are admins of their own data
-        isActive: true
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        businessId: true
-      }
-    })
+      // Create user
+      const user = await tx.users.create({
+        data: {
+          id: uuidv4(),
+          businessId: business.id,
+          email: email.toLowerCase(),
+          passwordHash,
+          firstName,
+          lastName,
+          role: 'ADMIN',
+          isActive: true,
+          updatedAt: new Date()
+        },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          businessId: true
+        }
+      })
 
-    // Create business chat config (required for chat sessions)
-    await prisma.businessChatConfig.create({
-      data: {
-        tenantId: business.id,
-        isActive: true
-      }
+      // Create business chat config (required for chat sessions)
+      await tx.business_chat_configs.create({
+        data: {
+          id: uuidv4(),
+          tenantId: business.id,
+          isActive: true,
+          updatedAt: new Date()
+        }
+      })
+
+      return { business, user }
     })
 
     // Generate JWT token
     const token = generateAccessToken({
-      userId: user.id,
-      businessId: user.businessId,
-      role: user.role as 'ADMIN' | 'MANAGER' | 'STAFF',
-      email: user.email,
-      businessSlug: business.slug
+      userId: result.user.id,
+      businessId: result.user.businessId,
+      role: result.user.role as 'ADMIN' | 'MANAGER' | 'STAFF',
+      email: result.user.email,
+      businessSlug: result.business.slug
     })
 
     return NextResponse.json({
       success: true,
       data: {
         user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role
+          id: result.user.id,
+          email: result.user.email,
+          firstName: result.user.firstName,
+          lastName: result.user.lastName,
+          role: result.user.role
         },
         business: {
-          id: business.id,
-          name: business.name,
-          slug: business.slug
+          id: result.business.id,
+          name: result.business.name,
+          slug: result.business.slug
         },
         token
       }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Chat auth signup error:', error)
+    console.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+      meta: error?.meta,
+      stack: error?.stack
+    })
+    
+    // Provide more specific error messages
+    let errorMessage = 'Account creation failed. Please try again.'
+    if (error.code === 'P2002') {
+      // Unique constraint violation
+      if (error.meta?.target?.includes('email')) {
+        errorMessage = 'An account with this email already exists'
+      } else if (error.meta?.target?.includes('slug')) {
+        errorMessage = 'Account creation failed. Please try again in a moment.'
+      }
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+
     return NextResponse.json({
       success: false,
       error: {
         code: 'INTERNAL_ERROR',
-        message: 'Account creation failed. Please try again.'
+        message: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       }
     }, { status: 500 })
   }

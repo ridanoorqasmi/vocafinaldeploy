@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { PrismaClient } from '@prisma/client'
+import { verifyAccessToken } from './token-service'
 
 const prisma = new PrismaClient()
 
@@ -150,8 +151,10 @@ export async function validateBusinessAccess(businessId: string): Promise<boolea
  */
 export async function authenticateToken(request: any): Promise<{success: boolean, user?: AuthUser, error?: any}> {
   try {
+    console.log('[lib/auth.authenticateToken] Starting authentication...')
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('[lib/auth.authenticateToken] Missing or invalid auth header')
       return {
         success: false,
         error: {
@@ -162,36 +165,67 @@ export async function authenticateToken(request: any): Promise<{success: boolean
     }
 
     const token = authHeader.substring(7) // Remove 'Bearer ' prefix
+    console.log('[lib/auth.authenticateToken] Token extracted, length:', token.length)
     
-    // Verify token
-    const payload = verifyToken(token)
+    // Check JWT_SECRET is set
+    if (!process.env.JWT_SECRET) {
+      console.error('[lib/auth.authenticateToken] JWT_SECRET environment variable is not set!')
+      return {
+        success: false,
+        error: {
+          code: 'CONFIG_ERROR',
+          message: 'Server configuration error'
+        }
+      }
+    }
+    
+    // Verify token using the new token service
+    const payload = verifyAccessToken(token)
     if (!payload) {
+      console.error('[lib/auth.authenticateToken] Token verification failed - payload is null')
+      console.error('[lib/auth.authenticateToken] This could mean: token expired, invalid secret, or malformed token')
       return {
         success: false,
         error: {
           code: 'INVALID_TOKEN',
-          message: 'Invalid or expired token'
+          message: 'Invalid or expired token. Please log in again.'
         }
       }
     }
+    console.log('[lib/auth.authenticateToken] Token verified, userId:', payload.userId, 'businessId:', payload.businessId)
 
-    // Get user from database
-    const user = await prisma.user.findFirst({
+    // Get user from database using userId from token
+    console.log('[lib/auth.authenticateToken] Looking up user in database:', payload.userId)
+    const user = await prisma.users.findFirst({
       where: {
-        email: payload.email,
-        businessId: payload.business_id,
+        id: payload.userId,
         deletedAt: null,
         isActive: true
       },
       select: {
         id: true,
         email: true,
+        firstName: true,
+        lastName: true,
         businessId: true,
         role: true
       }
     })
 
     if (!user) {
+      console.error('[lib/auth.authenticateToken] User not found in database:', payload.userId)
+      // Try to find user without isActive check to see if that's the issue
+      const inactiveUser = await prisma.users.findFirst({
+        where: {
+          id: payload.userId,
+          deletedAt: null
+        }
+      })
+      if (inactiveUser) {
+        console.error('[lib/auth.authenticateToken] User exists but isActive:', inactiveUser.isActive)
+      } else {
+        console.error('[lib/auth.authenticateToken] User does not exist at all')
+      }
       return {
         success: false,
         error: {
@@ -200,6 +234,7 @@ export async function authenticateToken(request: any): Promise<{success: boolean
         }
       }
     }
+    console.log('[lib/auth.authenticateToken] User found:', user.email)
 
     return {
       success: true,
@@ -211,7 +246,10 @@ export async function authenticateToken(request: any): Promise<{success: boolean
       }
     }
   } catch (error: any) {
-    console.error('Authentication error:', error)
+    console.error('[lib/auth.authenticateToken] Authentication error:', error)
+    if (error instanceof Error) {
+      console.error('[lib/auth.authenticateToken] Error details:', error.message, error.stack)
+    }
     return {
       success: false,
       error: {
@@ -243,7 +281,7 @@ export function getBusinessIdFromRequest(req: Request): string | null {
  */
 export async function requireBusinessAccess(userId: string, businessId: string): Promise<{success: boolean, error?: any}> {
   try {
-    const user = await prisma.user.findFirst({
+    const user = await prisma.users.findFirst({
       where: {
         id: userId,
         businessId: businessId,

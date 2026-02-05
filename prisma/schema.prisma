@@ -1206,11 +1206,111 @@ model users {
   followup_mappings followup_mappings[]
   followup_rules    followup_rules[]
   businesses        businesses          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sally_companies   sally_companies[]
 
   @@unique([businessId, email])
   @@index([deletedAt])
   @@index([email])
   @@index([role])
+}
+
+// Phase 1: Sales Agent "Sally" - Data Models
+model sales_agent_profiles {
+  id            String   @id @default(uuid())
+  tenantId      String
+  companyName   String
+  productDesc   String
+  industry      String?
+  targetAudience String?
+  market        String?
+  defaultTone   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("sales_agent_profiles")
+}
+
+// Company-Scoped Sales Content Architecture
+model sally_companies {
+  id        String   @id @default(uuid())
+  userId    String
+  tenantId  String   // Required for multi-tenant isolation (stored as string, no FK constraint in Prisma)
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sales_content sally_sales_content[]
+  workspaces sales_workspaces[]
+
+  @@index([userId])
+  @@index([tenantId])
+  @@map("sally_companies")
+}
+
+model sally_sales_content {
+  id         String   @id @default(uuid())
+  userId     String
+  companyId  String
+  inputJson  Json
+  outputJson Json
+  strategy   String?
+  strategyReason String?
+  // Phase 1: Additive fields for mode and configuration
+  mode       String?  // 'quick' | 'advanced'
+  selectedAssets Json? // { coldCall: boolean, coldEmail: boolean, pitch: boolean }
+  advancedInputs Json? // Advanced field values (nullable)
+  // Sales Workspaces: Optional workspace link (additive)
+  workspaceId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  companies  sally_companies @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  workspace  sales_workspaces? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+  @@index([createdAt])
+  @@index([workspaceId])
+  @@map("sally_sales_content")
+}
+
+// Sales Workspaces: Persistent workspaces for sales efforts
+model sales_workspaces {
+  id         String   @id @default(uuid())
+  userId     String
+  companyId  String
+  title      String   // Auto-generated, editable
+  goalType   String?  // e.g., 'cold_outreach', 'follow_up', 'pitch'
+  metadata   Json?    // Additional workspace metadata (nullable)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  companies  sally_companies @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  content    sally_sales_content[] // Content linked to this workspace
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([updatedAt])
+  @@map("sales_workspaces")
+}
+
+model sales_agent_runs {
+  id         String   @id @default(uuid())
+  tenantId   String
+  userId     String?  // Company-scoped architecture: user ID
+  companyId  String?  // Company-scoped architecture: company ID
+  inputJson  Json
+  outputJson Json
+  strategy   String?  // Phase 2: Selected strategy ('pain' | 'roi' | 'curiosity' | 'authority')
+  strategyReason String? // Phase 2: Reason for strategy selection
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([companyId])
+  @@index([createdAt])
+  @@index([strategy])
+  @@map("sales_agent_runs")
 }
 
 enum ApiKeyStatus {

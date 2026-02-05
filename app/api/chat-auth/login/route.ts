@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { v4 as uuidv4 } from 'uuid'
 import { generateAccessToken } from '@/lib/token-service'
 
 const prisma = new PrismaClient()
@@ -22,14 +23,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user by email
-    const user = await prisma.user.findFirst({
+    const user = await prisma.users.findFirst({
       where: {
         email: email.toLowerCase(),
         isActive: true,
         deletedAt: null
       },
       include: {
-        business: {
+        businesses: {
           select: {
             id: true,
             name: true,
@@ -64,18 +65,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Update last login
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() }
     })
 
     // Ensure business has chat config (create if missing)
-    await prisma.businessChatConfig.upsert({
+    await prisma.business_chat_configs.upsert({
       where: { tenantId: user.businessId },
-      update: {},
+      update: {
+        updatedAt: new Date()
+      },
       create: {
+        id: uuidv4(),
         tenantId: user.businessId,
-        isActive: true
+        isActive: true,
+        updatedAt: new Date()
       }
     })
 
@@ -85,7 +90,7 @@ export async function POST(request: NextRequest) {
       businessId: user.businessId,
       role: user.role as 'ADMIN' | 'MANAGER' | 'STAFF',
       email: user.email,
-      businessSlug: user.business.slug
+      businessSlug: user.businesses.slug
     })
 
     return NextResponse.json({
@@ -99,9 +104,9 @@ export async function POST(request: NextRequest) {
           role: user.role
         },
         business: {
-          id: user.business.id,
-          name: user.business.name,
-          slug: user.business.slug
+          id: user.businesses.id,
+          name: user.businesses.name,
+          slug: user.businesses.slug
         },
         token
       }

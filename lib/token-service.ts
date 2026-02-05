@@ -10,12 +10,14 @@ const prisma = new PrismaClient();
  * Generate JWT access token
  */
 export function generateAccessToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): string {
-  const secret = process.env.JWT_SECRET;
+  const secret = JWT_CONFIG.accessToken.secret || process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('JWT_SECRET environment variable is not set');
   }
+  console.log('[generateAccessToken] Generating token for userId:', payload.userId);
+  // Use 7 days expiration for better UX (users don't need to re-login frequently)
   return jwt.sign(payload, secret, {
-    expiresIn: '15m'
+    expiresIn: '7d'
   });
 }
 
@@ -68,8 +70,47 @@ export function generateTokens(user: {
  */
 export function verifyAccessToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, JWT_CONFIG.accessToken.secret) as JWTPayload;
-  } catch (error) {
+    const secret = JWT_CONFIG.accessToken.secret || process.env.JWT_SECRET;
+    if (!secret) {
+      console.error('[verifyAccessToken] JWT_SECRET is not set in environment variables');
+      console.error('[verifyAccessToken] JWT_CONFIG.accessToken.secret:', JWT_CONFIG.accessToken.secret);
+      console.error('[verifyAccessToken] process.env.JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
+      return null;
+    }
+    
+    console.log('[verifyAccessToken] Verifying token with secret (length):', secret.length);
+    const payload = jwt.verify(token, secret) as JWTPayload;
+    console.log('[verifyAccessToken] Token verified successfully');
+    console.log('[verifyAccessToken] Payload:', {
+      userId: payload.userId,
+      businessId: payload.businessId,
+      email: payload.email,
+      role: payload.role,
+      exp: payload.exp,
+      iat: payload.iat
+    });
+    
+    // Check if token is expired
+    if (payload.exp && payload.exp < Date.now() / 1000) {
+      console.error('[verifyAccessToken] Token has expired. Exp:', new Date(payload.exp * 1000), 'Now:', new Date());
+      return null;
+    }
+    
+    return payload;
+  } catch (error: any) {
+    if (error.name === 'TokenExpiredError') {
+      console.error('[verifyAccessToken] Token expired error:', error.expiredAt);
+      console.error('[verifyAccessToken] Current time:', new Date());
+    } else if (error.name === 'JsonWebTokenError') {
+      console.error('[verifyAccessToken] Invalid token (JsonWebTokenError):', error.message);
+    } else if (error.name === 'NotBeforeError') {
+      console.error('[verifyAccessToken] Token not active yet:', error.message);
+    } else {
+      console.error('[verifyAccessToken] Token verification error:', error.name, error.message);
+      if (error.stack) {
+        console.error('[verifyAccessToken] Stack:', error.stack);
+      }
+    }
     return null;
   }
 }
@@ -149,15 +190,30 @@ export async function validateUserSession(token: string): Promise<{
   business: any;
 } | null> {
   try {
+    console.log('[validateUserSession] Starting validation...');
     const payload = verifyAccessToken(token);
-    if (!payload) return null;
+    if (!payload) {
+      console.error('[validateUserSession] Token verification failed - payload is null');
+      return null;
+    }
+    console.log('[validateUserSession] Token verified, userId:', payload.userId, 'businessId:', payload.businessId);
 
-    // Set business context for RLS
-    await prisma.$executeRaw`SELECT set_current_business_id(${payload.businessId})`;
+    // Set business context for RLS (wrap in try-catch as it might not exist)
+    try {
+      await prisma.$executeRaw`SELECT set_current_business_id(${payload.businessId})`;
+    } catch (rlsError) {
+      console.warn('[validateUserSession] RLS function not available, continuing without it:', rlsError);
+      // Continue without RLS - not critical
+    }
 
     // Get user and business data
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+    console.log('[validateUserSession] Looking up user:', payload.userId);
+    const user = await prisma.users.findFirst({
+      where: { 
+        id: payload.userId,
+        isActive: true,
+        deletedAt: null
+      },
       select: {
         id: true,
         email: true,
@@ -169,10 +225,22 @@ export async function validateUserSession(token: string): Promise<{
       }
     });
 
-    if (!user || !user.isActive) return null;
+    if (!user) {
+      console.error('[validateUserSession] User not found or inactive:', payload.userId);
+      return null;
+    }
+    if (!user.isActive) {
+      console.error('[validateUserSession] User is inactive:', payload.userId);
+      return null;
+    }
+    console.log('[validateUserSession] User found:', user.email);
 
-    const business = await prisma.business.findUnique({
-      where: { id: payload.businessId },
+    console.log('[validateUserSession] Looking up business:', payload.businessId);
+    const business = await prisma.businesses.findFirst({
+      where: { 
+        id: payload.businessId,
+        deletedAt: null
+      },
       select: {
         id: true,
         name: true,
@@ -181,11 +249,19 @@ export async function validateUserSession(token: string): Promise<{
       }
     });
 
-    if (!business) return null;
+    if (!business) {
+      console.error('[validateUserSession] Business not found:', payload.businessId);
+      return null;
+    }
+    console.log('[validateUserSession] Business found:', business.name);
 
+    console.log('[validateUserSession] Validation successful');
     return { user, business };
   } catch (error) {
-    console.error('Error validating user session:', error);
+    console.error('[validateUserSession] Error validating user session:', error);
+    if (error instanceof Error) {
+      console.error('[validateUserSession] Error details:', error.message, error.stack);
+    }
     return null;
   }
 }

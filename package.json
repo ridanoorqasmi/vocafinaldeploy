@@ -12,7 +12,9 @@
     "db:seed": "prisma db seed",
     "db:test": "node scripts/test-postgres-connection.js",
     "db:debug": "node scripts/test-db-connection-debug.js",
-    "db:setup": "node scripts/setup-database-env.js"
+    "db:setup": "node scripts/setup-database-env.js",
+    "check:install": "node scripts/check-installation.js",
+    "check:env": "node scripts/check-env.js"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
