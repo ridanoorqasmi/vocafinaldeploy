@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { createConnector } from '@/lib/db-connectors/factory'
 import { decrypt } from '@/lib/encryption'
+import { randomUUID } from 'crypto'
 
 const prisma = new PrismaClient()
 
@@ -66,15 +67,16 @@ export class DatabaseSyncScheduler {
    */
   private async triggerAutoSync() {
     try {
-      if (!prisma || !prisma.connection || !prisma.mappedRecord) {
-        console.warn('[DB SYNC] Prisma client or models not ready, skipping run');
+      // Check if Prisma client and required models are available
+      if (!prisma || !prisma.external_connections) {
+        console.warn('[DB SYNC] Prisma client or external_connections model not ready, skipping run');
         return;
       }
 
       const now = new Date()
 
       // Find all connections ready for sync
-      const connectionsToSync = await prisma.connection.findMany({
+      const connectionsToSync = await prisma.external_connections.findMany({
         where: {
           isAutoSyncEnabled: true,
           status: 'ACTIVE',
@@ -85,7 +87,7 @@ export class DatabaseSyncScheduler {
           ]
         },
         include: {
-          mappings: true
+          followup_mappings: true
         }
       })
 
@@ -96,14 +98,14 @@ export class DatabaseSyncScheduler {
       // Sync each connection
       for (const connection of connectionsToSync) {
         // Set syncing flag
-        await prisma.connection.update({
+        await prisma.external_connections.update({
           where: { id: connection.id },
           data: { isSyncing: true }
         })
 
         try {
           // Sync each mapping for this connection
-          for (const mapping of connection.mappings) {
+          for (const mapping of connection.followup_mappings) {
             try {
               await this.syncMapping(connection, mapping)
             } catch (error) {
@@ -117,7 +119,7 @@ export class DatabaseSyncScheduler {
             ? new Date(now.getTime() + (connection.syncFrequencyMinutes * 60 * 1000))
             : null
 
-          await prisma.connection.update({
+          await prisma.external_connections.update({
             where: { id: connection.id },
             data: {
               lastSyncedAt: now,
@@ -129,7 +131,7 @@ export class DatabaseSyncScheduler {
           console.log(`Database sync completed for connection: ${connection.name}`)
         } catch (error) {
           // Reset syncing flag on error
-          await prisma.connection.update({
+          await prisma.external_connections.update({
             where: { id: connection.id },
             data: { isSyncing: false }
           })
@@ -186,13 +188,32 @@ export class DatabaseSyncScheduler {
       // Fetch all data from external database
       const externalData = await connector.query(mapping.resource, {}, 10000)
 
-      // Get existing mapped records
-      const existingRecords = await prisma.mappedRecord.findMany({
-        where: {
-          connectionId: connection.id,
-          mappingId: mapping.id
+      // Get existing mapped records using raw query (model not in Prisma schema)
+      let existingRecords: Array<{
+        id: string
+        externalId: string
+        data: any
+        isActive: boolean
+      }> = []
+      try {
+        existingRecords = await prisma.$queryRaw<Array<{
+          id: string
+          externalId: string
+          data: any
+          isActive: boolean
+        }>>`
+          SELECT id, "externalId", data, "isActive"
+          FROM mapped_records
+          WHERE "connectionId" = ${connection.id} AND "mappingId" = ${mapping.id || null}
+        `
+      } catch (error: any) {
+        // If table doesn't exist (P2021), skip this mapping
+        if (error?.code === 'P2021') {
+          console.warn(`[DB SYNC] mapped_records table may not exist, skipping record sync:`, error.message)
+          return // Skip this mapping if table doesn't exist
         }
-      })
+        throw error
+      }
 
       // Create maps for quick lookup
       const existingMap = new Map(
@@ -218,39 +239,30 @@ export class DatabaseSyncScheduler {
         const existing = existingMap.get(externalId)
 
         if (existing) {
-          // Update existing record
-          await prisma.mappedRecord.update({
-            where: { id: existing.id },
-            data: {
-              data: mappedData,
-              isActive: true,
-              syncedAt: new Date()
-            }
-          })
+          // Update existing record using raw query
+          await prisma.$executeRaw`
+            UPDATE mapped_records
+            SET data = ${JSON.stringify(mappedData)}::jsonb, "isActive" = true, "syncedAt" = ${new Date()}, "updatedAt" = ${new Date()}
+            WHERE id = ${existing.id}
+          `
         } else {
-          // Insert new record
-          await prisma.mappedRecord.create({
-            data: {
-              connectionId: connection.id,
-              mappingId: mapping.id,
-              externalId,
-              data: mappedData,
-              isActive: true
-            }
-          })
+          // Insert new record using raw query
+          const recordId = randomUUID()
+          await prisma.$executeRaw`
+            INSERT INTO mapped_records (id, "connectionId", "mappingId", "externalId", data, "isActive", "syncedAt", "createdAt", "updatedAt")
+            VALUES (${recordId}, ${connection.id}, ${mapping.id || null}, ${externalId}, ${JSON.stringify(mappedData)}::jsonb, true, ${new Date()}, ${new Date()}, ${new Date()})
+          `
         }
       }
 
       // Mark records not found in external data as inactive
       for (const [externalId, record] of existingMap.entries()) {
         if (!externalMap.has(externalId)) {
-          await prisma.mappedRecord.update({
-            where: { id: record.id },
-            data: {
-              isActive: false,
-              syncedAt: new Date()
-            }
-          })
+          await prisma.$executeRaw`
+            UPDATE mapped_records
+            SET "isActive" = false, "syncedAt" = ${new Date()}, "updatedAt" = ${new Date()}
+            WHERE id = ${record.id}
+          `
         }
       }
 
