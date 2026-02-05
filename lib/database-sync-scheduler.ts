@@ -13,8 +13,9 @@ export class DatabaseSyncScheduler {
   private isRunning: boolean = false;
 
   constructor() {
-    this.start();
+    // Do NOT auto-start on construction
   }
+  
 
   /**
    * Start the scheduler
@@ -29,9 +30,12 @@ export class DatabaseSyncScheduler {
     console.log('Starting database sync scheduler...');
 
     // Schedule sync check every 1 minute (60000 milliseconds)
-    this.intervalId = setInterval(async () => {
-      await this.triggerAutoSync();
+    this.intervalId = setInterval(() => {
+      this.triggerAutoSync().catch(err => {
+        console.error('[DB SYNC] Unhandled sync error (non-fatal):', err);
+      });
     }, 60_000); // 1 minute
+    
 
     console.log('Database sync scheduler started successfully (checking every 1 minute)');
   }
@@ -62,6 +66,11 @@ export class DatabaseSyncScheduler {
    */
   private async triggerAutoSync() {
     try {
+      if (!prisma || !prisma.connection || !prisma.mappedRecord) {
+        console.warn('[DB SYNC] Prisma client or models not ready, skipping run');
+        return;
+      }
+
       const now = new Date()
 
       // Find all connections ready for sync
@@ -278,10 +287,17 @@ export function getDatabaseSyncScheduler(): DatabaseSyncScheduler {
  * Initialize the database sync scheduler
  */
 export function initializeDatabaseSyncScheduler() {
+  if (process.env.ENABLE_DB_SYNC !== 'true') {
+    console.log('Database sync scheduler disabled (ENABLE_DB_SYNC != true)');
+    return null;
+  }
+
   const scheduler = getDatabaseSyncScheduler();
+  scheduler.start();
   console.log('Database sync scheduler initialized');
   return scheduler;
 }
+
 
 /**
  * Graceful shutdown
