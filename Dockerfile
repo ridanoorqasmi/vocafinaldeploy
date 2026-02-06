@@ -10,5 +10,8 @@ COPY . .
 RUN npx prisma generate
 
 ENV NODE_ENV=development
+ENV PORT=3000
 
-CMD ["sh", "-c", "npx next dev -p $PORT -H 0.0.0.0"]
+EXPOSE 3000
+
+CMD ["sh", "-c", "npx next dev -p 3000 -H 0.0.0.0"]
