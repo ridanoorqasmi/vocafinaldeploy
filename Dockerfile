@@ -7,9 +7,8 @@ RUN npm install
 
 COPY . .
 
+RUN npx prisma generate
+
 ENV NODE_ENV=development
-ENV PORT=8080
 
-EXPOSE 8080
-
-CMD ["npx", "next", "dev", "-p", "8080", "-H", "0.0.0.0"]
+CMD ["sh", "-c", "npx next dev -p $PORT -H 0.0.0.0"]
